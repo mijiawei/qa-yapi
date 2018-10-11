@@ -13,19 +13,20 @@ import {
   Tabs,
   Switch,
   Row,
-  Col
+  Col,
+  Alert
 } from 'antd';
 import constants from '../../constants/variable.js';
 import AceEditor from 'client/components/AceEditor/AceEditor';
 import _ from 'underscore';
-import { isJson, deepCopyJson } from '../../common.js';
+import { isJson, deepCopyJson, json5_parse } from '../../common.js';
 import axios from 'axios';
 import ModalPostman from '../ModalPostman/index.js';
 import CheckCrossInstall, { initCrossRequest } from './CheckCrossInstall.js';
 import './Postman.scss';
 import ProjectEnv from '../../containers/Project/Setting/ProjectEnv/index.js';
 import json5 from 'json5';
-const { handleParamsValue } = require('common/utils.js');
+const { handleParamsValue, ArrayToObject, schemaValidator } = require('common/utils.js');
 const {
   handleParams,
   checkRequestBodyIsRaw,
@@ -33,7 +34,8 @@ const {
   crossRequest,
   checkNameIsExistInArray
 } = require('common/postmanLib.js');
-
+var storage=window.localStorage;
+var a=storage.a;
 const HTTP_METHOD = constants.HTTP_METHOD;
 const InputGroup = Input.Group;
 const Option = Select.Option;
@@ -63,8 +65,51 @@ const InsertCodeMap = [
   {
     code: 'assert.notDeepEqual(body, {"errcode": 0})',
     title: '断言对象 body 不等于 {"errcode": 0}'
+  },
+  {
+    code: "assert.equal(body.username, " + a + ")",
+    title: '断言对象mysql'
   }
+
 ];
+
+const ParamsNameComponent = props => {
+  const { example, desc, name } = props;
+  const isNull = !example && !desc;
+  const TooltipTitle = () => {
+    return (
+      <div>
+        {example && (
+          <div>
+            示例： <span className="table-desc">{example}</span>
+          </div>
+        )}
+        {desc && (
+          <div>
+            备注： <span className="table-desc">{desc}</span>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div>
+      {isNull ? (
+        <Input disabled value={name} className="key" />
+      ) : (
+        <Tooltip placement="topLeft" title={<TooltipTitle />}>
+          <Input disabled value={name} className="key" />
+        </Tooltip>
+      )}
+    </div>
+  );
+};
+ParamsNameComponent.propTypes = {
+  example: PropTypes.string,
+  desc: PropTypes.string,
+  name: PropTypes.string
+};
 
 export default class Run extends Component {
   static propTypes = {
@@ -78,6 +123,7 @@ export default class Run extends Component {
     this.state = {
       loading: false,
       resStatusCode: null,
+      test_valid_msg: null,
       resStatusText: null,
       case_env: '',
       mock_verify: false,
@@ -160,7 +206,6 @@ export default class Run extends Component {
         required: true
       });
       body = JSON.stringify(result.data);
-      console.log('body', body);
     }
 
     this.setState(
@@ -171,6 +216,7 @@ export default class Run extends Component {
         ...data,
         req_body_other: body,
         resStatusCode: null,
+        test_valid_msg: null,
         resStatusText: null
       },
       () => this.props.type === 'inter' && this.initEnvState(data.case_env, data.env)
@@ -222,13 +268,18 @@ export default class Run extends Component {
     }
   }
 
-  handleValue(val) {
-    return handleParamsValue(val, {});
+  handleValue(val, global) {
+    let globalValue = ArrayToObject(global);
+    return handleParamsValue(val, {
+      global: globalValue
+    });
   }
 
   onOpenTest = d => {
+
     this.setState({
       test_script: d.text
+   //   test_script: "assert.equal(body.username, " + ss + ")"
     });
   };
 
@@ -252,6 +303,7 @@ export default class Run extends Component {
     this.setState({
       loading: true
     });
+
     let options = handleParams(this.state, this.handleValue),
       result;
 
@@ -292,12 +344,34 @@ export default class Run extends Component {
       });
     }
 
+    // 对 返回值数据结构 和定义的 返回数据结构 进行 格式校验
+    let validResult = this.resBodyValidator(this.props.data, result.body);
+    if (!validResult.valid) {
+      this.setState({ test_valid_msg: `返回参数 ${validResult.message}` });
+    } else {
+      this.setState({ test_valid_msg: '' });
+    }
+
     this.setState({
       resStatusCode: result.status,
       resStatusText: result.statusText,
       test_res_header: result.header,
       test_res_body: result.body
     });
+  };
+
+  // 返回数据与定义数据的比较判断
+  resBodyValidator = (interfaceData, test_res_body) => {
+    const { res_body_type, res_body_is_json_schema, res_body } = interfaceData;
+    let validResult = { valid: true };
+
+    if (res_body_type === 'json' && res_body_is_json_schema) {
+      const schema = json5_parse(res_body);
+      const params = json5_parse(test_res_body);
+      validResult = schemaValidator(schema, params);
+    }
+
+    return validResult;
   };
 
   changeParam = (name, v, index, key) => {
@@ -455,7 +529,7 @@ export default class Run extends Component {
       inputValue,
       hasPlugin
     } = this.state;
-
+    // console.log(env);
     return (
       <div className="interface-test postman">
         {this.state.modalVisible && (
@@ -559,7 +633,13 @@ export default class Run extends Component {
             {req_params.map((item, index) => {
               return (
                 <div key={index} className="key-value-wrap">
-                  <Input disabled value={item.name} className="key" />
+                  {/* <Tooltip
+                    placement="topLeft"
+                    title={<TooltipContent example={item.example} desc={item.desc} />}
+                  >
+                    <Input disabled value={item.name} className="key" />
+                  </Tooltip> */}
+                  <ParamsNameComponent example={item.example} desc={item.desc} name={item.name} />
                   <span className="eq-symbol">=</span>
                   <Input
                     value={item.value}
@@ -594,7 +674,13 @@ export default class Run extends Component {
             {req_query.map((item, index) => {
               return (
                 <div key={index} className="key-value-wrap">
-                  <Input disabled value={item.name} className="key" />
+                  {/* <Tooltip
+                    placement="topLeft"
+                    title={<TooltipContent example={item.example} desc={item.desc} />}
+                  >
+                    <Input disabled value={item.name} className="key" />
+                  </Tooltip> */}
+                  <ParamsNameComponent example={item.example} desc={item.desc} name={item.name} />
                   &nbsp;
                   {item.required == 1 ? (
                     <Checkbox className="params-enable" checked={true} disabled />
@@ -632,7 +718,13 @@ export default class Run extends Component {
             {req_headers.map((item, index) => {
               return (
                 <div key={index} className="key-value-wrap">
-                  <Input disabled value={item.name} className="key" />
+                  {/* <Tooltip
+                    placement="topLeft"
+                    title={<TooltipContent example={item.example} desc={item.desc} />}
+                  >
+                    <Input disabled value={item.name} className="key" />
+                  </Tooltip> */}
+                  <ParamsNameComponent example={item.example} desc={item.desc} name={item.name} />
                   <span className="eq-symbol">=</span>
                   <Input
                     value={item.value}
@@ -682,7 +774,8 @@ export default class Run extends Component {
                     高级参数设置
                   </Button>
                   <Tooltip title="高级参数设置只在json字段值中生效">
-                    {'  '}<Icon type="question-circle-o" />
+                    {'  '}
+                    <Icon type="question-circle-o" />
                   </Tooltip>
                 </div>
               )}
@@ -703,7 +796,17 @@ export default class Run extends Component {
                   {req_body_form.map((item, index) => {
                     return (
                       <div key={index} className="key-value-wrap">
-                        <Input disabled value={item.name} className="key" />
+                        {/* <Tooltip
+                          placement="topLeft"
+                          title={<TooltipContent example={item.example} desc={item.desc} />}
+                        >
+                          <Input disabled value={item.name} className="key" />
+                        </Tooltip> */}
+                        <ParamsNameComponent
+                          example={item.example}
+                          desc={item.desc}
+                          name={item.name}
+                        />
                         &nbsp;
                         {item.required == 1 ? (
                           <Checkbox className="params-enable" checked={true} disabled />
@@ -776,6 +879,21 @@ export default class Run extends Component {
               >
                 {this.state.resStatusCode + '  ' + this.state.resStatusText}
               </h2>
+              {this.state.test_valid_msg && (
+                <Alert
+                  message={
+                    <span>
+                      Warning &nbsp;
+                      <Tooltip title="针对定义为 json schema 的返回数据进行格式校验">
+                        <Icon type="question-circle-o" />
+                      </Tooltip>
+                    </span>
+                  }
+                  type="warning"
+                  showIcon
+                  description={this.state.test_valid_msg}
+                />
+              )}
 
               <div className="container-header-body">
                 <div className="header">
@@ -806,6 +924,7 @@ export default class Run extends Component {
                     className="pretty-editor-body"
                     data={this.state.test_res_body}
                     mode={handleContentType(this.state.test_res_header)}
+                    // mode="html"
                   />
                 </div>
               </div>
@@ -830,6 +949,7 @@ export default class Run extends Component {
                   <AceEditor
                     onChange={this.onOpenTest}
                     className="case-script"
+                //    data={this.state.test_script}
                     data={this.state.test_script}
                     ref={aceEditor => {
                       this.aceEditor = aceEditor;

@@ -2,20 +2,50 @@ const interfaceModel = require('../models/interface.js');
 const interfaceCatModel = require('../models/interfaceCat.js');
 const interfaceCaseModel = require('../models/interfaceCase.js');
 const followModel = require('../models/follow.js');
-const groupModel = require('../models/group.js')
+const groupModel = require('../models/group.js');
 const _ = require('underscore');
 const url = require('url');
 const baseController = require('./base.js');
 const yapi = require('../yapi.js');
 const userModel = require('../models/user.js');
 const projectModel = require('../models/project.js');
-const jsondiffpatch = require('jsondiffpatch')
+const jsondiffpatch = require('jsondiffpatch');
 const formattersHtml = jsondiffpatch.formatters.html;
 const showDiffMsg = require('../../common/diff-view.js');
-const fs = require('fs-extra')
+const mergeJsonSchema = require('../../common/mergeJsonSchema');
+const fs = require('fs-extra');
 const path = require('path');
+//1.导入http模块
+  const http = require('http');
+//导入文件模块
+  const fs1 = require('fs');
+//导入路径模块
+ // const path = require('path');
+//导入querystring模块（解析post请求数据）
+  const querystring = require('querystring');
+//2.创建服务器
+  const app = http.createServer();
+//3.添加响应事件
 
-
+//  const url = require('url');
+//http.createServer(function(req, res){
+//  //  console.log(req.method);
+//
+//  //1.通过判断url路径和请求方式来判断是否是表单提交
+//
+//
+//  res.header('Access-Control-Allow-Origin', '*');
+//  res.header('Access-Control-Allow-Headers', 'Content-Type, Content-Length, Authorization, Accept, X-Requested-With , yourHeaderFeild');
+//  res.header('Access-Control-Allow-Methods', 'PUT, POST, GET, DELETE, OPTIONS');
+//
+//  const urlModule = require('http://101.132.148.57:3000/project/9/interface/api/heroAdd');
+//  let params = url.parse(urlModule, true).query;//解析数据 获得Json对象
+//  let value = params.ip;//通过参数名称获得参数值
+//  var resoinseData=1;
+//  res.json(resoinseData);
+//  return 1;
+//
+//})
 
 // const annotatedCss = require("jsondiffpatch/public/formatters-styles/annotated.css");
 // const htmlCss = require("jsondiffpatch/public/formatters-styles/html.css");
@@ -34,78 +64,240 @@ class interfaceController extends baseController {
     const minLengthStringField = {
       type: 'string',
       minLength: 1
-    }
+    };
 
     const addAndUpCommonField = {
-      'desc': 'string',
-      'status': 'string',
-      req_query: [{
-        name: 'string',
-        value: 'string',
-        example: 'string',
-        desc: 'string',
-        required: 'string'
-      }],
-      req_headers: [{
-        name: 'string',
-        value: 'string',
-        example: 'string',
-        desc: 'string',
-        required: 'string'
-      }],
+      desc: 'string',
+      status: 'string',
+      req_query: [
+        {
+          name: 'string',
+          value: 'string',
+          example: 'string',
+          desc: 'string',
+          required: 'string'
+        }
+      ],
+      req_headers: [
+        {
+          name: 'string',
+          value: 'string',
+          example: 'string',
+          desc: 'string',
+          required: 'string'
+        }
+      ],
       req_body_type: 'string',
-      req_params: [{
-        name: 'string',
-        example: 'string',
-        desc: 'string'
-      }],
-      req_body_form: [{
-        name: 'string',
-        type: {
-          type: 'string'
-        },
-        example: 'string',
-        desc: 'string',
-        required: 'string'
-      }],
-      'req_body_other': 'string',
+      req_params: [
+        {
+          name: 'string',
+          example: 'string',
+          desc: 'string'
+        }
+      ],
+      req_body_form: [
+        {
+          name: 'string',
+          type: {
+            type: 'string'
+          },
+          example: 'string',
+          desc: 'string',
+          required: 'string'
+        }
+      ],
+      req_body_other: 'string',
       res_body_type: 'string',
       res_body: 'string',
       custom_field_value: 'string',
-      'api_opened': 'boolean',
-      'req_body_is_json_schema': 'string',
-      'res_body_is_json_schema': 'string',
-      'markdown': 'string'
-    }
+      api_opened: 'boolean',
+      req_body_is_json_schema: 'string',
+      res_body_is_json_schema: 'string',
+      markdown: 'string'
+    };
 
     this.schemaMap = {
-      add: Object.assign({ 
-        '*project_id': 'number',
-        '*path': minLengthStringField,
-        '*title': minLengthStringField,
-        '*method': minLengthStringField,
-        '*catid': 'number'
-      }, addAndUpCommonField),
-      up: Object.assign({
-        '*id': 'number',
-        'project_id': 'number',
-        'path': minLengthStringField,
-        'title': minLengthStringField,
-        'method': minLengthStringField,
-        'catid': 'number',
-        'switch_notice': 'boolean',
-        'message': minLengthStringField
-      }, addAndUpCommonField),
-      save: Object.assign({
-        'project_id': 'number',
-        'catid': 'number',
-        'title': minLengthStringField,
-        'path': minLengthStringField,
-        'method': minLengthStringField,
-        'message': minLengthStringField
-      }, addAndUpCommonField)
-    }
+      add: Object.assign(
+        {
+          '*project_id': 'number',
+          '*path': minLengthStringField,
+          '*title': minLengthStringField,
+          '*method': minLengthStringField,
+          '*catid': 'number'
+        },
+        addAndUpCommonField
+      ),
+      up: Object.assign(
+        {
+          '*id': 'number',
+          project_id: 'number',
+          path: minLengthStringField,
+          title: minLengthStringField,
+          method: minLengthStringField,
+          catid: 'number',
+          switch_notice: 'boolean',
+          message: minLengthStringField
+        },
+        addAndUpCommonField
+      ),
+      save: Object.assign(
+        {
+          project_id: 'number',
+          catid: 'number',
+          title: minLengthStringField,
+          path: minLengthStringField,
+          method: minLengthStringField,
+          message: minLengthStringField,
+          dataSync: 'string'
+        },
+        addAndUpCommonField
+      )
+    };
   }
+
+  /**
+   * Created by wdr520 on 2018/9/6.
+   */
+// var mysql  = require('mysql');
+// 出入后台的数据
+  // var ip = '11.231.74.71' ;
+  // var user = 'root';
+  // var password = 'MDbF9bcK8dH7';
+  // var post = '3306';
+  // var database= '3150nodejs';
+  // var tool='';
+  // var Sql='';
+  // var addSql='';
+  // var modSql='';
+  // var delSql='';
+
+
+
+// app.on('request', function (req, res) {
+
+
+
+
+
+  
+  //var dataObject = querystring.parse(data);
+  //console.log(dataObject);
+  // ip =  dataObject['ip'];
+  //user =  dataObject['user'];
+  //password =  dataObject['password'];
+  //post =  dataObject['post'];
+  //database =  dataObject['database'];
+  //tool =  dataObject['ip'];
+  //Sql =  dataObject['Sql'];
+  //addSql =  dataObject['addsql'];
+  //delSql =  dataObject['delsql'];
+  //modSql =  dataObject['modsql'];
+
+  //var connection = mysql.createConnection({
+  //    host     : ip,
+  //    user     : user,
+  //    password : password,
+  //    port: post,
+  //    database: database
+  //});
+  //connection.connect();
+
+//            if(tool == 1) {
+//                //查询
+////var  sql = 'SELECT * FROM websites';
+//                connection.query(Sql, function (err, result) {
+//                    if (err) {
+//                        console.log('[SELECT ERROR] - ', err.message);
+//                        return;
+//                    }
+//                    console.log('--------------------------SELECT----------------------------');
+//                    console.log(result);
+//                    console.log('------------------------------------------------------------\n\n');
+//                    res.send(result);
+//                });
+//            }else{
+//                if(tool == 2 ){
+////插入
+////var  addSql = 'INSERT INTO websites(Id,name,url,alexa,country) VALUES(0,?,?,?,?)';
+////var  addSqlParams = ['菜鸟工具', 'https://c.runoob.com','23453', 'CN'];
+//            connection.query(addSql ,function (err, result) {
+//                if(err){
+//                    console.log('[INSERT ERROR] - ',err.message);
+//                    return;
+//                }
+//
+//                console.log('--------------------------INSERT----------------------------');
+//                //console.log('INSERT ID:',result.insertId);
+//                console.log('INSERT ID:',result);
+//                console.log('-----------------------------------------------------------------\n\n');
+//                res.send(result);
+//            });
+//
+//            }else {
+//                    if(tool == 3 ) {
+////更新
+////var modSql = 'UPDATE websites SET name = ?,url = ? WHERE Id = ?';
+////var modSqlParams = ['菜鸟移动站', 'https://m.runoob.com',6];
+//                        connection.query(modSql, function (err, result) {
+//                            if (err) {
+//                                console.log('[UPDATE ERROR] - ', err.message);
+//                                return;
+//                            }
+//                            console.log('--------------------------UPDATE----------------------------');
+//                            console.log('UPDATE affectedRows', result.affectedRows);
+//                            console.log('-----------------------------------------------------------------\n\n');
+//                            res.send(result);
+//                        });
+//                    }else {
+////删除
+////var delSql = 'DELETE FROM websites where id=6';
+//            connection.query(delSql,function (err, result) {
+//                if(err){
+//                    console.log('[DELETE ERROR] - ',err.message);
+//                    return;
+//                }
+//
+//                console.log('--------------------------DELETE----------------------------');
+//                console.log('DELETE affectedRows',result.affectedRows);
+//                console.log('-----------------------------------------------------------------\n\n');
+//                res.send(result);
+//            });
+//            }
+//            }
+//            }
+//          connection.end();
+
+
+//.listen(3000);
+
+
+//var createServer = http.createServer(onRequest);
+//
+//function onRequest(request, response) {
+//    response.writeHead(200, {
+//        'Content-Type': 'text/plain',
+//        'Access-Control-Allow-Origin': '*'
+//    });
+//     const urlModule = require('/heroAdd');
+//
+//
+//    var str = JSON.stringify(urlModule.parse(request.url, true).query);
+//    response.write(str);
+//    response.end();
+//
+//
+//}
+//createServer.listen(3000);
+
+
+
+
+
+
+
+
+
+
 
   /**
    * 添加项目分组
@@ -138,74 +330,98 @@ class interfaceController extends baseController {
   async add(ctx) {
     let params = ctx.params;
 
-    if(!this.$tokenAuth){
-      let auth = await this.checkAuth(params.project_id, 'project', 'edit')
-    
+    if (!this.$tokenAuth) {
+      let auth = await this.checkAuth(params.project_id, 'project', 'edit');
+
       if (!auth) {
-        return ctx.body = yapi.commons.resReturn(null, 40033, '没有权限');
+        return (ctx.body = yapi.commons.resReturn(null, 40033, '没有权限'));
       }
     }
     params.method = params.method || 'GET';
-    params.res_body_is_json_schema = _.isUndefined (params.res_body_is_json_schema) ? false : params.res_body_is_json_schema;
-    params.req_body_is_json_schema = _.isUndefined(params.req_body_is_json_schema) ?  false : params.req_body_is_json_schema;
+    params.res_body_is_json_schema = _.isUndefined(params.res_body_is_json_schema)
+      ? false
+      : params.res_body_is_json_schema;
+    params.req_body_is_json_schema = _.isUndefined(params.req_body_is_json_schema)
+      ? false
+      : params.req_body_is_json_schema;
     params.method = params.method.toUpperCase();
     params.req_params = params.req_params || [];
+
     params.res_body_type = params.res_body_type ? params.res_body_type.toLowerCase() : 'json';
     let http_path = url.parse(params.path, true);
-
+   // path路径合理判断--start
     if (!yapi.commons.verifyPath(http_path.pathname)) {
-      return ctx.body = yapi.commons.resReturn(null, 400, 'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成');
+      return (ctx.body = yapi.commons.resReturn(
+        null,
+        400,
+        'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成'
+      ));
     }
+    // path路径合理判断--end
 
+    // 设置 params.query_path--start
     params.query_path = {};
     params.query_path.path = http_path.pathname;
     params.query_path.params = [];
-    Object.keys(http_path.query).forEach((item) => {
+    Object.keys(http_path.query).forEach(item => {
       params.query_path.params.push({
         name: item,
         value: http_path.query[item]
-      })
-    })
+      });
+    });
+    // 设置 params.query_path--end
 
+    // 检测是否存在--start
     let checkRepeat = await this.Model.checkRepeat(params.project_id, params.path, params.method);
-
     if (checkRepeat > 0) {
-      return ctx.body = yapi.commons.resReturn(null, 40022, '已存在的接口:' + params.path + '[' + params.method + ']');
+      return (ctx.body = yapi.commons.resReturn(
+        null,
+        40022,
+        '已存在的接口:' + params.path + '[' + params.method + ']'
+      ));
     }
+    // 检测是否存在--end
 
-
+   //设置时间--start
     let data = Object.assign(params, {
       uid: this.getUid(),
       add_time: yapi.commons.time(),
       up_time: yapi.commons.time()
     });
+   //设置时间--end
+
 
     yapi.commons.handleVarPath(params.path, params.req_params);
 
     if (params.req_params.length > 0) {
-      data.type = 'var'
+      data.type = 'var';
       data.req_params = params.req_params;
     } else {
-      data.type = 'static'
+      data.type = 'static';
     }
 
     // 新建接口的人成为项目dev  如果不存在的话
+    // 命令行导入时无法获知导入接口人的信息，其uid 为 999999
     let uid = this.getUid();
-    if (this.getRole() !== 'admin') {
+
+    if (this.getRole() !== 'admin' && uid !== 999999) {
       let userdata = await yapi.commons.getUserdata(uid, 'dev');
       // 检查一下是否有这个人
       let check = await this.projectModel.checkMemberRepeat(params.project_id, uid);
-      if(check === 0) {
+      if (check === 0 && userdata) {
         await this.projectModel.addMember(params.project_id, [userdata]);
       }
     }
 
-
     let result = await this.Model.save(data);
-    yapi.emitHook('interface_add', result._id).then();
-    this.catModel.get(params.catid).then((cate) => {
+    yapi.emitHook('interface_add', result).then();
+    this.catModel.get(params.catid).then(cate => {
       let username = this.getUsername();
-      let title = `<a href="/user/profile/${this.getUid()}">${username}</a> 为分类 <a href="/project/${params.project_id}/interface/api/cat_${params.catid}">${cate.name}</a> 添加了接口 <a href="/project/${params.project_id}/interface/api/${result._id}">${data.title}</a> `
+      let title = `<a href="/user/profile/${this.getUid()}">${username}</a> 为分类 <a href="/project/${
+        params.project_id
+      }/interface/api/cat_${params.catid}">${cate.name}</a> 添加了接口 <a href="/project/${
+        params.project_id
+      }/interface/api/${result._id}">${data.title}</a> `;
 
       yapi.commons.saveLog({
         content: title,
@@ -218,8 +434,9 @@ class interfaceController extends baseController {
     });
 
     ctx.body = yapi.commons.resReturn(result);
-
   }
+
+
 
   /**
    * 保存接口数据，如果接口存在则更新数据，如果接口不存在则添加数据
@@ -251,51 +468,62 @@ class interfaceController extends baseController {
 
   async save(ctx) {
     let params = ctx.params;
-
-    if(!this.$tokenAuth){
-      let auth = await this.checkAuth(params.project_id, 'project', 'edit')
-      if (!auth ) {
-        return ctx.body = yapi.commons.resReturn(null, 40033, '没有权限');
+    
+    if (!this.$tokenAuth) {
+      let auth = await this.checkAuth(params.project_id, 'project', 'edit');
+      if (!auth) {
+        return (ctx.body = yapi.commons.resReturn(null, 40033, '没有权限'));
       }
     }
     params.method = params.method || 'GET';
     params.method = params.method.toUpperCase();
-    
 
     let http_path = url.parse(params.path, true);
 
     if (!yapi.commons.verifyPath(http_path.pathname)) {
-      return ctx.body = yapi.commons.resReturn(null, 400, 'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成');
+      return (ctx.body = yapi.commons.resReturn(
+        null,
+        400,
+        'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成'
+      ));
     }
 
-    let result = await this.Model.getByPath(params.project_id, params.path, params.method, '_id');
-   
+    let result = await this.Model.getByPath(params.project_id, params.path, params.method, '_id res_body');
+
     if (result.length > 0) {
       result.forEach(async item => {
         params.id = item._id;
         // console.log(this.schemaMap['up'])
-        let validResult = yapi.commons.validateParams(this.schemaMap['up'], params);
+        let validParams = Object.assign({}, params)
+        let validResult = yapi.commons.validateParams(this.schemaMap['up'], validParams);
         if (validResult.valid) {
           let data = {};
-          data.params = params
-          await this.up(data)
+          data.params = validParams;
+
+          if(params.res_body_is_json_schema && params.dataSync === 'good'){
+            try{
+              let new_res_body = yapi.commons.json_parse(params.res_body)
+              let old_res_body = yapi.commons.json_parse(item.res_body)
+              data.params.res_body = JSON.stringify(mergeJsonSchema(old_res_body, new_res_body),null,2);
+            }catch(err){}
+          }
+          await this.up(data);
         } else {
-          return ctx.body = yapi.commons.resReturn(null, 400, validResult.message);
+          return (ctx.body = yapi.commons.resReturn(null, 400, validResult.message));
         }
-      })
+      });
     } else {
       let validResult = yapi.commons.validateParams(this.schemaMap['add'], params);
       if (validResult.valid) {
         let data = {};
-        data.params = params
-        await this.add(data)
+        data.params = params;
+        await this.add(data);
       } else {
-        return ctx.body = yapi.commons.resReturn(null, 400, validResult.message);
+        return (ctx.body = yapi.commons.resReturn(null, 400, validResult.message));
       }
     }
     ctx.body = yapi.commons.resReturn(result);
     // return ctx.body = yapi.commons.resReturn(null, 400, 'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成');
-
   }
 
   /**
@@ -311,23 +539,23 @@ class interfaceController extends baseController {
   async get(ctx) {
     let params = ctx.request.query;
     if (!params.id) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '接口id不能为空');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '接口id不能为空'));
     }
 
     try {
       let result = await this.Model.get(params.id);
       // console.log('result', result);
       if (!result) {
-        return ctx.body = yapi.commons.resReturn(null, 490, '不存在的');
+        return (ctx.body = yapi.commons.resReturn(null, 490, '不存在的'));
       }
       let userinfo = await this.userModel.findById(result.uid);
       let project = await this.projectModel.getBaseInfo(result.project_id);
       if (project.project_type === 'private') {
-        if (await this.checkAuth(project._id, 'project', 'view') !== true) {
-          return ctx.body = yapi.commons.resReturn(null, 406, '没有权限');
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
         }
       }
-      yapi.emitHook('interface_get', params.id).then();
+      yapi.emitHook('interface_get', result).then();
       result = result.toObject();
       if (userinfo) {
         result.username = userinfo.username;
@@ -354,36 +582,36 @@ class interfaceController extends baseController {
   async list(ctx) {
     let project_id = ctx.request.query.project_id;
     let page = ctx.request.query.page || 1,
-    limit = ctx.request.query.limit || 10;
+      limit = ctx.request.query.limit || 10;
     let project = await this.projectModel.getBaseInfo(project_id);
     if (!project) {
-      return ctx.body = yapi.commons.resReturn(null, 407, '不存在的项目');
+      return (ctx.body = yapi.commons.resReturn(null, 407, '不存在的项目'));
     }
     if (project.project_type === 'private') {
-      if (await this.checkAuth(project._id, 'project', 'view') !== true) {
-        return ctx.body = yapi.commons.resReturn(null, 406, '没有权限');
+      if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+        return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
       }
     }
     if (!project_id) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
     }
 
     try {
-      let result
-      if(limit === 'all'){
+      let result;
+      if (limit === 'all') {
         result = await this.Model.list(project_id);
-      } else{
+      } else {
         result = await this.Model.listWithPage(project_id, page, limit);
       }
-      
-      let count = await this.Model.listCount({project_id});
-      
+
+      let count = await this.Model.listCount({ project_id });
+
       ctx.body = yapi.commons.resReturn({
         count: count,
         total: Math.ceil(count / limit),
         list: result
       });
-      yapi.emitHook('interface_list', project_id).then();
+      yapi.emitHook('interface_list', result).then();
     } catch (err) {
       ctx.body = yapi.commons.resReturn(null, 402, err.message);
     }
@@ -391,79 +619,79 @@ class interfaceController extends baseController {
 
   async downloadCrx(ctx) {
     let filename = 'crossRequest.zip';
-    let dataBuffer = yapi.fs.readFileSync(yapi.path.join(yapi.WEBROOT, 'static/attachment/cross-request.zip'));
+    let dataBuffer = yapi.fs.readFileSync(
+      yapi.path.join(yapi.WEBROOT, 'static/attachment/cross-request.zip')
+    );
     ctx.set('Content-disposition', 'attachment; filename=' + filename);
     ctx.set('Content-Type', 'application/zip');
     ctx.body = dataBuffer;
   }
 
   async listByCat(ctx) {
-    
     let catid = ctx.request.query.catid;
     let page = ctx.request.query.page || 1,
-    limit = ctx.request.query.limit || 10;
-   
+      limit = ctx.request.query.limit || 10;
+
     if (!catid) {
-      return ctx.body = yapi.commons.resReturn(null, 400, 'catid不能为空');
+      return (ctx.body = yapi.commons.resReturn(null, 400, 'catid不能为空'));
     }
     try {
       let catdata = await this.catModel.get(catid);
-     
+
       let project = await this.projectModel.getBaseInfo(catdata.project_id);
       if (project.project_type === 'private') {
-        if (await this.checkAuth(project._id, 'project', 'view') !== true) {
-          return ctx.body = yapi.commons.resReturn(null, 406, '没有权限');
+        if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
         }
       }
-      
-      let result = await this.Model.listByCatidWithPage(catid, page, limit)
 
-      let count = await this.Model.listCount({catid});
-      
+      let result = await this.Model.listByCatidWithPage(catid, page, limit);
+
+      let count = await this.Model.listCount({ catid });
+
       ctx.body = yapi.commons.resReturn({
         count: count,
         total: Math.ceil(count / limit),
         list: result
       });
     } catch (err) {
-      ctx.body = yapi.commons.resReturn(null, 402, err.message+'1');
+      ctx.body = yapi.commons.resReturn(null, 402, err.message + '1');
     }
-
   }
 
   async listByMenu(ctx) {
     let project_id = ctx.request.query.project_id;
     if (!project_id) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
     }
 
     let project = await this.projectModel.getBaseInfo(project_id);
     if (!project) {
-      return ctx.body = yapi.commons.resReturn(null, 406, '不存在的项目');
+      return (ctx.body = yapi.commons.resReturn(null, 406, '不存在的项目'));
     }
     if (project.project_type === 'private') {
-      if (await this.checkAuth(project._id, 'project', 'view') !== true) {
-        return ctx.body = yapi.commons.resReturn(null, 406, '没有权限');
+      if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+        return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
       }
     }
 
     try {
-      let result = await this.catModel.list(project_id), newResult = [];
+      let result = await this.catModel.list(project_id),
+        newResult = [];
       for (let i = 0, item, list; i < result.length; i++) {
-        item = result[i].toObject()
-        list = await this.Model.listByCatid(item._id)
+        item = result[i].toObject();
+        list = await this.Model.listByCatid(item._id);
         for (let j = 0; j < list.length; j++) {
-          list[j] = list[j].toObject() 
+          list[j] = list[j].toObject();
         }
-        
+
         item.list = list;
-        newResult[i] = item
+        newResult[i] = item;
       }
       ctx.body = yapi.commons.resReturn(newResult);
     } catch (err) {
       ctx.body = yapi.commons.resReturn(null, 402, err.message);
     }
-
   }
 
   /**
@@ -503,57 +731,75 @@ class interfaceController extends baseController {
 
     let id = params.id;
     params.message = params.message || '';
-    params.message = params.message.replace(/\n/g, "<br>")
+    params.message = params.message.replace(/\n/g, '<br>');
     // params.res_body_is_json_schema = _.isUndefined (params.res_body_is_json_schema) ? true : params.res_body_is_json_schema;
     // params.req_body_is_json_schema = _.isUndefined(params.req_body_is_json_schema) ?  true : params.req_body_is_json_schema;
 
     let interfaceData = await this.Model.get(id);
     if (!interfaceData) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '不存在的接口');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '不存在的接口'));
     }
-    if(!this.$tokenAuth){
-      let auth = await this.checkAuth(interfaceData.project_id, 'project', 'edit')
+    if (!this.$tokenAuth) {
+      let auth = await this.checkAuth(interfaceData.project_id, 'project', 'edit');
       if (!auth) {
-        return ctx.body = yapi.commons.resReturn(null, 400, '没有权限');
+        return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
       }
     }
-    
 
-    let data = Object.assign({
-      up_time: yapi.commons.time()
-    }, params);
+    let data = Object.assign(
+      {
+        up_time: yapi.commons.time()
+      },
+      params
+
+
+    );
 
     if (params.path) {
       let http_path = url.parse(params.path, true);
 
       if (!yapi.commons.verifyPath(http_path.pathname)) {
-        return ctx.body = yapi.commons.resReturn(null, 400, 'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成');
+        return (ctx.body = yapi.commons.resReturn(
+          null,
+          400,
+          'path第一位必需为 /, 只允许由 字母数字-/_:.! 组成'
+        ));
       }
       params.query_path = {};
       params.query_path.path = http_path.pathname;
       params.query_path.params = [];
-      Object.keys(http_path.query).forEach((item) => {
+      Object.keys(http_path.query).forEach(item => {
         params.query_path.params.push({
           name: item,
           value: http_path.query[item]
-        })
-      })
-      data.query_path = params.query_path
+        });
+      });
+      data.query_path = params.query_path;
     }
 
-
-    if (params.path && (params.path !== interfaceData.path || params.method !== interfaceData.method)) {
-      let checkRepeat = await this.Model.checkRepeat(interfaceData.project_id, params.path, params.method);
+    if (
+      params.path &&
+      (params.path !== interfaceData.path || params.method !== interfaceData.method)
+    ) {
+      let checkRepeat = await this.Model.checkRepeat(
+        interfaceData.project_id,
+        params.path,
+        params.method
+      );
       if (checkRepeat > 0) {
-        return ctx.body = yapi.commons.resReturn(null, 401, '已存在的接口:' + params.path + '[' + params.method + ']');
+        return (ctx.body = yapi.commons.resReturn(
+          null,
+          401,
+          '已存在的接口:' + params.path + '[' + params.method + ']'
+        ));
       }
     }
 
     if (!_.isUndefined(data.req_params)) {
       if (Array.isArray(data.req_params) && data.req_params.length > 0) {
-        data.type = 'var'
+        data.type = 'var';
       } else {
-        data.type = 'static'
+        data.type = 'static';
         data.req_params = [];
       }
     }
@@ -566,14 +812,17 @@ class interfaceController extends baseController {
       cat_id: data.catid,
       current: CurrentInterfaceData.toObject(),
       old: interfaceData.toObject()
-    }
+    };
 
-
-    this.catModel.get(interfaceData.catid).then((cate) => {
+    this.catModel.get(interfaceData.catid).then(cate => {
       yapi.commons.saveLog({
         content: `<a href="/user/profile/${this.getUid()}">${username}</a> 
-                    更新了分类 <a href="/project/${cate.project_id}/interface/api/cat_${data.catid}">${cate.name}</a> 
-                    下的接口 <a href="/project/${cate.project_id}/interface/api/${id}">${interfaceData.title}</a><p>${params.message}</p>`,
+                    更新了分类 <a href="/project/${cate.project_id}/interface/api/cat_${
+          data.catid
+        }">${cate.name}</a> 
+                    下的接口 <a href="/project/${cate.project_id}/interface/api/${id}">${
+          interfaceData.title
+        }</a><p>${params.message}</p>`,
         type: 'project',
         uid: this.getUid(),
         username: username,
@@ -585,14 +834,24 @@ class interfaceController extends baseController {
     this.projectModel.up(interfaceData.project_id, { up_time: new Date().getTime() }).then();
 
     if (params.switch_notice === true) {
-
       let diffView = showDiffMsg(jsondiffpatch, formattersHtml, logData);
-      let annotatedCss = fs.readFileSync(path.resolve(yapi.WEBROOT, 'node_modules/jsondiffpatch/public/formatters-styles/annotated.css'), 'utf8');
-      let htmlCss = fs.readFileSync(path.resolve(yapi.WEBROOT, 'node_modules/jsondiffpatch/public/formatters-styles/html.css'), 'utf8');
+      let annotatedCss = fs.readFileSync(
+        path.resolve(
+          yapi.WEBROOT,
+          'node_modules/jsondiffpatch/dist/formatters-styles/annotated.css'
+        ),
+        'utf8'
+      );
+      let htmlCss = fs.readFileSync(
+        path.resolve(yapi.WEBROOT, 'node_modules/jsondiffpatch/dist/formatters-styles/html.css'),
+        'utf8'
+      );
 
       let project = await this.projectModel.getBaseInfo(interfaceData.project_id);
-      let interfaceUrl = `http://${ctx.request.host}/project/${interfaceData.project_id}/interface/api/${id}`
-      this.sendNotice(interfaceData.project_id, {
+      let interfaceUrl = `http://${ctx.request.host}/project/${
+        interfaceData.project_id
+      }/interface/api/${id}`;
+      yapi.commons.sendNotice(interfaceData.project_id, {
         title: `${username} 更新了接口`,
         content: `<html>
         <head>
@@ -610,7 +869,7 @@ class interfaceController extends baseController {
         <p>详细改动日志: ${this.diffHTML(diffView)}</p></div>
         </body>
         </html>`
-      })
+      });
     }
 
     yapi.emitHook('interface_update', id).then();
@@ -620,15 +879,15 @@ class interfaceController extends baseController {
 
   diffHTML(html) {
     if (html.length === 0) {
-      return `<span style="color: #555">没有改动，该操作未改动Api数据</span>`
+      return `<span style="color: #555">没有改动，该操作未改动Api数据</span>`;
     }
 
     return html.map(item => {
-      return (`<div>
+      return `<div>
       <h4 class="title">${item.title}</h4>
       <div>${item.content}</div>
-    </div>`)
-    })
+    </div>`;
+    });
   }
 
   /**
@@ -647,43 +906,51 @@ class interfaceController extends baseController {
       let id = ctx.request.body.id;
 
       if (!id) {
-        return ctx.body = yapi.commons.resReturn(null, 400, '接口id不能为空');
+        return (ctx.body = yapi.commons.resReturn(null, 400, '接口id不能为空'));
       }
 
-      let data = await this.Model.get(ctx.request.body.id);
+      let data = await this.Model.get(id);
 
       if (data.uid != this.getUid()) {
-        let auth = await this.checkAuth(data.project_id, 'project', 'danger')
+        let auth = await this.checkAuth(data.project_id, 'project', 'danger');
         if (!auth) {
-          return ctx.body = yapi.commons.resReturn(null, 400, '没有权限');
+          return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
         }
       }
 
-      let inter = await this.Model.get(id);
+      // let inter = await this.Model.get(id);
       let result = await this.Model.del(id);
-      yapi.emitHook('interface_del', id).then();
+      yapi.emitHook('interface_del', data).then();
       await this.caseModel.delByInterfaceId(id);
       let username = this.getUsername();
-      this.catModel.get(inter.catid).then((cate) => {
+      this.catModel.get(data.catid).then(cate => {
         yapi.commons.saveLog({
-          content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了分类 <a href="/project/${cate.project_id}/interface/api/cat_${inter.catid}">${cate.name}</a> 下的接口 "${inter.title}"`,
+          content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了分类 <a href="/project/${
+            cate.project_id
+          }/interface/api/cat_${data.catid}">${cate.name}</a> 下的接口 "${data.title}"`,
           type: 'project',
           uid: this.getUid(),
           username: username,
           typeid: cate.project_id
         });
-      })
+      });
       this.projectModel.up(data.project_id, { up_time: new Date().getTime() }).then();
       ctx.body = yapi.commons.resReturn(result);
     } catch (err) {
       ctx.body = yapi.commons.resReturn(null, 402, err.message);
     }
   }
-
+  // 处理编辑冲突
   async solveConflict(ctx) {
     try {
-      let id = parseInt(ctx.query.id, 10), result, userInst, userinfo, data;
-      if (!id) return ctx.websocket.send("id 参数有误");
+      let id = parseInt(ctx.query.id, 10),
+        result,
+        userInst,
+        userinfo,
+        data;
+      if (!id) {
+        return ctx.websocket.send('id 参数有误');
+      }
       result = await this.Model.get(id);
 
       if (result.edit_uid !== 0 && result.edit_uid !== this.getUid()) {
@@ -692,20 +959,20 @@ class interfaceController extends baseController {
         data = {
           errno: result.edit_uid,
           data: { uid: result.edit_uid, username: userinfo.username }
-        }
+        };
       } else {
-        this.Model.upEditUid(id, this.getUid()).then()
+        this.Model.upEditUid(id, this.getUid()).then();
         data = {
           errno: 0,
           data: result
-        }
+        };
       }
       ctx.websocket.send(JSON.stringify(data));
       ctx.websocket.on('close', () => {
-        this.Model.upEditUid(id, 0).then()
-      })
+        this.Model.upEditUid(id, 0).then();
+      });
     } catch (err) {
-      yapi.commons.log(err, 'error')
+      yapi.commons.log(err, 'error');
     }
   }
 
@@ -717,20 +984,19 @@ class interfaceController extends baseController {
         project_id: 'number',
         desc: 'string'
       });
-      
 
       if (!params.project_id) {
-        return ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空');
+        return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
       }
-      if(!this.$tokenAuth){
-        let auth = await this.checkAuth(params.project_id, 'project', 'edit')
+      if (!this.$tokenAuth) {
+        let auth = await this.checkAuth(params.project_id, 'project', 'edit');
         if (!auth) {
-          return ctx.body = yapi.commons.resReturn(null, 400, '没有权限');
+          return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
         }
       }
-      
+
       if (!params.name) {
-        return ctx.body = yapi.commons.resReturn(null, 400, '名称不能为空');
+        return (ctx.body = yapi.commons.resReturn(null, 400, '名称不能为空'));
       }
 
       let result = await this.catModel.save({
@@ -740,11 +1006,13 @@ class interfaceController extends baseController {
         uid: this.getUid(),
         add_time: yapi.commons.time(),
         up_time: yapi.commons.time()
-      })
+      });
 
       let username = this.getUsername();
       yapi.commons.saveLog({
-        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 添加了分类  <a href="/project/${params.project_id}/interface/api/cat_${result._id}">${params.name}</a>`,
+        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 添加了分类  <a href="/project/${
+          params.project_id
+        }/interface/api/cat_${result._id}">${params.name}</a>`,
         type: 'project',
         uid: this.getUid(),
         username: username,
@@ -752,7 +1020,6 @@ class interfaceController extends baseController {
       });
 
       ctx.body = yapi.commons.resReturn(result);
-
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }
@@ -761,30 +1028,34 @@ class interfaceController extends baseController {
   async upCat(ctx) {
     try {
       let params = ctx.request.body;
+
+      let username = this.getUsername();
+      let cate = await this.catModel.get(params.catid);
+
+      let auth = await this.checkAuth(cate.project_id, 'project', 'edit');
+      if (!auth) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
+      }
+
       let result = await this.catModel.up(params.catid, {
         name: params.name,
         desc: params.desc,
         up_time: yapi.commons.time()
       });
 
-      let username = this.getUsername();
-      let cate = await this.catModel.get(params.catid);
-
-      let auth = await this.checkAuth(cate.project_id, 'project', 'edit')
-      if (!auth) {
-        return ctx.body = yapi.commons.resReturn(null, 400, '没有权限');
-      }
       yapi.commons.saveLog({
-        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 更新了分类 <a href="/project/${cate.project_id}/interface/api/cat_${params.catid}">${cate.name}</a>`,
+        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 更新了分类 <a href="/project/${
+          cate.project_id
+        }/interface/api/cat_${params.catid}">${cate.name}</a>`,
         type: 'project',
         uid: this.getUid(),
         username: username,
         typeid: cate.project_id
       });
 
-      ctx.body = yapi.commons.resReturn(result)
+      ctx.body = yapi.commons.resReturn(result);
     } catch (e) {
-      ctx.body = yapi.commons.resReturn(null, 400, e.message)
+      ctx.body = yapi.commons.resReturn(null, 400, e.message);
     }
   }
 
@@ -793,19 +1064,21 @@ class interfaceController extends baseController {
       let id = ctx.request.body.catid;
       let catData = await this.catModel.get(id);
       if (!catData) {
-        ctx.body = yapi.commons.resReturn(null, 400, "不存在的分类")
+        ctx.body = yapi.commons.resReturn(null, 400, '不存在的分类');
       }
 
       if (catData.uid !== this.getUid()) {
-        let auth = await this.checkAuth(catData.project_id, 'project', 'danger')
+        let auth = await this.checkAuth(catData.project_id, 'project', 'danger');
         if (!auth) {
-          return ctx.body = yapi.commons.resReturn(null, 400, '没有权限');
+          return (ctx.body = yapi.commons.resReturn(null, 400, '没有权限'));
         }
       }
 
       let username = this.getUsername();
       yapi.commons.saveLog({
-        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了分类 "${catData.name}" 及该分类下的接口`,
+        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了分类 "${
+          catData.name
+        }" 及该分类下的接口`,
         type: 'project',
         uid: this.getUid(),
         username: username,
@@ -813,23 +1086,22 @@ class interfaceController extends baseController {
       });
 
       let interfaceData = await this.Model.listByCatid(id);
+
       interfaceData.forEach(async item => {
         try {
-          yapi.emitHook('interface_del', item._id).then();
+          yapi.emitHook('interface_del', item).then();
           await this.caseModel.delByInterfaceId(item._id);
         } catch (e) {
           yapi.commons.log(e.message, 'error');
         }
-
-      })
+      });
       await this.catModel.del(id);
       let r = await this.Model.delByCatid(id);
-      return ctx.body = yapi.commons.resReturn(r);
+      return (ctx.body = yapi.commons.resReturn(r));
     } catch (e) {
-      yapi.commons.resReturn(null, 400, e.message)
+      yapi.commons.resReturn(null, 400, e.message);
     }
   }
-
 
   /**
    * 获取分类列表
@@ -846,18 +1118,18 @@ class interfaceController extends baseController {
     let project_id = ctx.request.query.project_id;
 
     if (!project_id || isNaN(project_id)) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
     }
 
     try {
       let project = await this.projectModel.getBaseInfo(project_id);
       if (project.project_type === 'private') {
-        if (await this.checkAuth(project._id, 'project', 'edit') !== true) {
-          return ctx.body = yapi.commons.resReturn(null, 406, '没有权限');
+        if ((await this.checkAuth(project._id, 'project', 'edit')) !== true) {
+          return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
         }
       }
       let res = await this.catModel.list(project_id);
-      return ctx.body = yapi.commons.resReturn(res);
+      return (ctx.body = yapi.commons.resReturn(res));
     } catch (e) {
       yapi.commons.resReturn(null, 400, e.message);
     }
@@ -871,23 +1143,22 @@ class interfaceController extends baseController {
    * @foldnumber 10
    * @param {String}   app_code = '111'
    * @returns {Object}
-   * 
+   *
    */
   async getCustomField(ctx) {
-    let params = ctx.request.query
+    let params = ctx.request.query;
 
     if (Object.keys(params).length !== 1) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '参数数量错误');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '参数数量错误'));
     }
     let customFieldName = Object.keys(params)[0];
     let customFieldValue = params[customFieldName];
 
     try {
-
       //  查找有customFieldName的分组（group）
-      let groups = await this.groupModel.getcustomFieldName(customFieldName)
+      let groups = await this.groupModel.getcustomFieldName(customFieldName);
       if (groups.length === 0) {
-        return ctx.body = yapi.commons.resReturn(null, 404, '没有找到对应自定义接口');
+        return (ctx.body = yapi.commons.resReturn(null, 404, '没有找到对应自定义接口'));
       }
 
       // 在每个分组（group）下查找对应project的id值
@@ -897,70 +1168,34 @@ class interfaceController extends baseController {
 
         // 在每个项目（project）中查找interface下的custom_field_value
         for (let j = 0; j < projects.length; j++) {
-          let data = {}
-          let inter = await this.Model.getcustomFieldValue(projects[j]._id, customFieldValue)
+          let data = {};
+          let inter = await this.Model.getcustomFieldValue(projects[j]._id, customFieldValue);
           if (inter.length > 0) {
             data.project_name = projects[j].name;
             data.project_id = projects[j]._id;
             inter = inter.map((item, i) => {
               item = inter[i] = inter[i].toObject();
-              item.res_body = yapi.commons.json_parse(item.res_body)
-              item.req_body_other = yapi.commons.json_parse(item.req_body_other)
+              item.res_body = yapi.commons.json_parse(item.res_body);
+              item.req_body_other = yapi.commons.json_parse(item.req_body_other);
 
-              return item
-            })
+              return item;
+            });
 
             data.list = inter;
             interfaces.push(data);
           }
         }
       }
-      return ctx.body = yapi.commons.resReturn(interfaces);
+      return (ctx.body = yapi.commons.resReturn(interfaces));
     } catch (e) {
       yapi.commons.resReturn(null, 400, e.message);
     }
   }
 
-
-  async sendNotice(projectId, data) {
-    const list = await this.followModel.listByProjectId(projectId);
-    const starUsers = list.map(item => item.uid);
-
-    const projectList = await this.projectModel.get(projectId);
-    // const projectMembers = projectList.members.map(item => item.uid);
-    const projectMembers = projectList.members.filter(item => item.email_notice).map(item => item.uid);
-    
-
-    const users = this.arrUnique(projectMembers, starUsers);
-    const usersInfo = await this.userModel.findByUids(users)
-    const emails = usersInfo.map(item => item.email).join(',');
-
-    try {
-      yapi.commons.sendMail({
-        to: emails,
-        contents: data.content,
-        subject: data.title
-      })
-    } catch (e) {
-      yapi.commons.log('邮件发送失败：' + e, 'error')
-    }
-
-  }
-
-  arrUnique(arr1, arr2) {
-
-    let arr = arr1.concat(arr2);
-    let res = arr.filter(function (item, index, arr) {
-      return arr.indexOf(item) === index;
-    })
-    return res;
-
-  }
-
   requiredSort(params) {
     return params.sort((item1, item2) => {
       return item2.required - item1.required;
-    })
+    });
   }
 
   /**
@@ -978,20 +1213,22 @@ class interfaceController extends baseController {
     try {
       let params = ctx.request.body;
       if (!params || !Array.isArray(params)) {
-        ctx.body = yapi.commons.resReturn(null, 400, "请求参数必须是数组")
+        ctx.body = yapi.commons.resReturn(null, 400, '请求参数必须是数组');
       }
-      params.forEach((item) => {
+      params.forEach(item => {
         if (item.id) {
-          this.Model.upIndex(item.id, item.index).then((res) => { }, (err) => {
-            yapi.commons.log(err.message, 'error')
-          })
+          this.Model.upIndex(item.id, item.index).then(
+            res => {},
+            err => {
+              yapi.commons.log(err.message, 'error');
+            }
+          );
         }
-
       });
 
-      return ctx.body = yapi.commons.resReturn('成功！')
+      return (ctx.body = yapi.commons.resReturn('成功！'));
     } catch (e) {
-      ctx.body = yapi.commons.resReturn(null, 400, e.message)
+      ctx.body = yapi.commons.resReturn(null, 400, e.message);
     }
   }
 
@@ -1010,80 +1247,75 @@ class interfaceController extends baseController {
     try {
       let params = ctx.request.body;
       if (!params || !Array.isArray(params)) {
-        ctx.body = yapi.commons.resReturn(null, 400, "请求参数必须是数组")
+        ctx.body = yapi.commons.resReturn(null, 400, '请求参数必须是数组');
       }
-      params.forEach((item) => {
+      params.forEach(item => {
         if (item.id) {
-          this.catModel.upCatIndex(item.id, item.index).then((res) => { }, (err) => {
-            yapi.commons.log(err.message, 'error')
-          })
+          this.catModel.upCatIndex(item.id, item.index).then(
+            res => {},
+            err => {
+              yapi.commons.log(err.message, 'error');
+            }
+          );
         }
-
       });
 
-      return ctx.body = yapi.commons.resReturn('成功！')
+      return (ctx.body = yapi.commons.resReturn('成功！'));
     } catch (e) {
-      ctx.body = yapi.commons.resReturn(null, 400, e.message)
+      ctx.body = yapi.commons.resReturn(null, 400, e.message);
     }
   }
 
-  async schema2json(ctx){
+  async schema2json(ctx) {
     let schema = ctx.request.body.schema;
     let required = ctx.request.body.required;
 
     let res = yapi.commons.schemaToJson(schema, {
-      alwaysFakeOptionals: required ? true : false
-    })
+      alwaysFakeOptionals: _.isUndefined(required) ? true : require
+    });
     // console.log('res',res)
-    return ctx.body = res; 
-    
+    return (ctx.body = res);
   }
 
   // 获取开放接口数据
   async listByOpen(ctx) {
     let project_id = ctx.request.query.project_id;
-    
+
     if (!project_id) {
-      return ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空');
+      return (ctx.body = yapi.commons.resReturn(null, 400, '项目id不能为空'));
     }
 
     let project = await this.projectModel.getBaseInfo(project_id);
     if (!project) {
-      return ctx.body = yapi.commons.resReturn(null, 406, '不存在的项目');
+      return (ctx.body = yapi.commons.resReturn(null, 406, '不存在的项目'));
     }
     if (project.project_type === 'private') {
-      if (await this.checkAuth(project._id, 'project', 'view') !== true) {
-        return ctx.body = yapi.commons.resReturn(null, 406, '没有权限');
+      if ((await this.checkAuth(project._id, 'project', 'view')) !== true) {
+        return (ctx.body = yapi.commons.resReturn(null, 406, '没有权限'));
       }
     }
 
-    
     let basepath = project.basepath;
     try {
-      let result = await this.catModel.list(project_id), newResult = [];
-      
+      let result = await this.catModel.list(project_id),
+        newResult = [];
+
       for (let i = 0, item, list; i < result.length; i++) {
-        item = result[i].toObject()
-        list = await this.Model.listByInterStatus(item._id, 'open')
+        item = result[i].toObject();
+        list = await this.Model.listByInterStatus(item._id, 'open');
         for (let j = 0; j < list.length; j++) {
           list[j] = list[j].toObject();
-          list[j].basepath = basepath
+          list[j].basepath = basepath;
         }
-       
-        newResult = [].concat(newResult, list)
-      }
-   
-    ctx.body = yapi.commons.resReturn(newResult);
 
+        newResult = [].concat(newResult, list);
+      }
+
+      ctx.body = yapi.commons.resReturn(newResult);
     } catch (err) {
       ctx.body = yapi.commons.resReturn(null, 402, err.message);
     }
-
   }
-
-
 }
-
-
 
 module.exports = interfaceController;

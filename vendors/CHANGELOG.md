@@ -1,3 +1,72 @@
+### v1.3.23
+
+* 接口tag功能
+* 数据导入增加 merge 功能
+* 增加参数的批量导入功能
+* json schema 可视化编辑器增加 mock 功能
+
+
+#### Bug Fixed
+
+* 接口path中写入 ?name=xxx bug
+* 高级mock 匹配 data: [{item: XXX}] 时匹配不成功
+* 接口运行 query params 自动勾选
+* mock get 带 cookie 时跨域
+* json schema 嵌套多层 array 预览不展示 bug
+* swagger URL 导入 跨域问题
+
+### v1.3.22
+
+* json schema number和integer支持枚举
+* 服务端测试增加下载功能
+* 增加 mock 接口请求字段参数验证
+* 增加返回数据验证
+
+#### Bug Fixed
+
+* 命令行导入成员信息为 undefined
+* 修复form 参数为空时 接口无法保存的问题
+
+### v1.3.21
+
+* 请求配置增加 context.utils.CryptoJS
+* 环境变量支持自定义全局变量
+* 增加wiki数据导出功能
+* 用户管理处增加搜索功能
+* 增加项目全局 mock 脚本功能
+* 高级 mock 期望 支持关闭开启功能
+
+#### Bug Fixed
+
+* 优化ldap登陆 
+* swagger 导入公共params
+* 接口编辑 mockEditor 修改为 AceEditor
+
+### v1.3.20
+
+#### Bug Fixed
+* 修复 ykit 打包代码问题
+* 修复 swagger url 导入选中后再切换其他数据方式时拖拽区域不出现问题
+* 修复 wiki controller 后端报错问题
+
+
+### v1.3.19
+
+* 增加项目文档记录wiki
+* 支持swagger URL 导入
+* 接口运行和测试集合中加入参数备注信息
+* 测试接口导入支持状态过滤
+* json schema 增加枚举备注功能
+* 左侧菜单栏可以支持单独滚动条
+* 支持新版本通知
+
+#### Bug Fixed
+
+* 修复测试用例名称为空时保存测试用例出现的bug
+* 导出markdown 路径参数处格式错误和参数table备注信息换行后样式错误
+
+
+
 ### v1.3.18
 
 * 增加全局接口搜索功能
@@ -10,7 +79,6 @@
 * mongodb3.4-> 3.6 聚合 cursor报错
 * path 路径支持 ！
 * json-schema 编辑器修复修改 type 导致描述信息被重置的问题
-
 
 ### v1.3.17
 

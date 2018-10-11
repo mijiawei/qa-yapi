@@ -12,6 +12,7 @@ const userModel = require('../models/user.js');
 const logModel = require('../models/log.js');
 const followModel = require('../models/follow.js');
 const tokenModel = require('../models/token.js');
+const url = require('url');
 
 const sha = require('sha.js');
 
@@ -115,10 +116,18 @@ class projectController extends baseController {
   }
 
   handleBasepath(basepath) {
-    if (!basepath) return '';
-    if (basepath === '/') return '';
-    if (basepath[0] !== '/') basepath = '/' + basepath;
-    if (basepath[basepath.length - 1] === '/') basepath = basepath.substr(0, basepath.length - 1);
+    if (!basepath) {
+      return '';
+    }
+    if (basepath === '/') {
+      return '';
+    }
+    if (basepath[0] !== '/') {
+      basepath = '/' + basepath;
+    }
+    if (basepath[basepath.length - 1] === '/') {
+      basepath = basepath.substr(0, basepath.length - 1);
+    }
     if (!/^\/[a-zA-Z0-9\-\/\._]+$/.test(basepath)) {
       return false;
     }
@@ -126,7 +135,9 @@ class projectController extends baseController {
   }
 
   verifyDomain(domain) {
-    if (!domain) return false;
+    if (!domain) {
+      return false;
+    }
     if (/^[a-zA-Z0-9\-_\.]+?\.[a-zA-Z0-9\-_\.]*?[a-zA-Z]{2,6}$/.test(domain)) {
       return true;
     }
@@ -206,6 +217,7 @@ class projectController extends baseController {
       color: params.color,
       add_time: yapi.commons.time(),
       up_time: yapi.commons.time(),
+      is_json5: false,
       env: [{ name: 'local', domain: 'http://127.0.0.1' }]
     };
 
@@ -246,6 +258,7 @@ class projectController extends baseController {
       username: username,
       typeid: result._id
     });
+    yapi.emitHook('project_add', result).then();
     ctx.body = yapi.commons.resReturn(result);
   }
 
@@ -343,10 +356,9 @@ class projectController extends baseController {
       if (this.getRole() !== 'admin') {
         let userdata = await yapi.commons.getUserdata(uid, 'owner');
         let check = await this.Model.checkMemberRepeat(copyId, uid);
-        if(check === 0){
+        if (check === 0) {
           copyProjectMembers.push(userdata);
         }
-        
       }
       await this.Model.addMember(result._id, copyProjectMembers);
 
@@ -437,36 +449,39 @@ class projectController extends baseController {
    */
 
   async delMember(ctx) {
-    let params = ctx.params;
+    try {
+      let params = ctx.params;
 
-    var check = await this.Model.checkMemberRepeat(params.id, params.member_uid);
-    if (check === 0) {
-      return (ctx.body = yapi.commons.resReturn(null, 400, '项目成员不存在'));
-    }
+      var check = await this.Model.checkMemberRepeat(params.id, params.member_uid);
+      if (check === 0) {
+        return (ctx.body = yapi.commons.resReturn(null, 400, '项目成员不存在'));
+      }
 
-    if ((await this.checkAuth(params.id, 'project', 'danger')) !== true) {
-      return (ctx.body = yapi.commons.resReturn(null, 405, '没有权限'));
-    }
+      if ((await this.checkAuth(params.id, 'project', 'danger')) !== true) {
+        return (ctx.body = yapi.commons.resReturn(null, 405, '没有权限'));
+      }
 
-    let result = await this.Model.delMember(params.id, params.member_uid);
-    let username = this.getUsername();
-    yapi
-      .getInst(userModel)
-      .findById(params.member_uid)
-      .then(member => {
-        yapi.commons.saveLog({
-          content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了项目中的成员 <a href="/user/profile/${
-            params.member_uid
-          }">${member.username}</a>`,
-          type: 'project',
-          uid: this.getUid(),
-          username: username,
-          typeid: params.id
+      let result = await this.Model.delMember(params.id, params.member_uid);
+      let username = this.getUsername();
+      yapi
+        .getInst(userModel)
+        .findById(params.member_uid)
+        .then(member => {
+          yapi.commons.saveLog({
+            content: `<a href="/user/profile/${this.getUid()}">${username}</a> 删除了项目中的成员 <a href="/user/profile/${
+              params.member_uid
+            }">${member ? member.username : ''}</a>`,
+            type: 'project',
+            uid: this.getUid(),
+            username: username,
+            typeid: params.id
+          });
         });
-      });
-    ctx.body = yapi.commons.resReturn(result);
+      ctx.body = yapi.commons.resReturn(result);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
   }
-
 
   /**
    * 获取项目成员列表
@@ -521,7 +536,7 @@ class projectController extends baseController {
     }
     result.role = await this.getProjectRole(params.id, 'project');
 
-    yapi.emitHook('project_add', params.id).then();
+    yapi.emitHook('project_get', result).then();
     ctx.body = yapi.commons.resReturn(result);
   }
 
@@ -682,17 +697,19 @@ class projectController extends baseController {
       let projectInst = yapi.getInst(projectModel);
       var check = await projectInst.checkMemberRepeat(params.id, params.member_uid);
       if (check === 0) {
-        return ctx.body = yapi.commons.resReturn(null, 400, '项目成员不存在');
+        return (ctx.body = yapi.commons.resReturn(null, 400, '项目成员不存在'));
       }
-  
-      let result = await projectInst.changeMemberEmailNotice(params.id, params.member_uid, params.notice);
+
+      let result = await projectInst.changeMemberEmailNotice(
+        params.id,
+        params.member_uid,
+        params.notice
+      );
       ctx.body = yapi.commons.resReturn(result);
-    }catch (e) {
+    } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }
-   
   }
-
 
   /**
    * 项目头像设置
@@ -763,7 +780,8 @@ class projectController extends baseController {
         group_id: 'number',
         desc: 'string',
         pre_script: 'string',
-        after_script: 'string'
+        after_script: 'string',
+        project_mock_script: 'string'
       });
 
       if (!id) {
@@ -796,19 +814,8 @@ class projectController extends baseController {
       let data = {
         up_time: yapi.commons.time()
       };
-      if (params.project_type) {
-        data.project_type = params.project_type;
-      }
 
-      if (!_.isUndefined(params.name)) data.name = params.name;
-      if (!_.isUndefined(params.desc)) data.desc = params.desc;
-      if (!_.isUndefined(params.group_id)) data.group_id = params.group_id;
-      if (!_.isUndefined(params.basepath)) data.basepath = params.basepath;
-      if (!_.isUndefined(params.switch_notice)) data.switch_notice = params.switch_notice;
-      if (!_.isUndefined(params.color)) data.color = params.color;
-      if (!_.isUndefined(params.icon)) data.icon = params.icon;
-      if (!_.isUndefined(params.pre_script)) data.pre_script = params.pre_script;
-      if (!_.isUndefined(params.after_script)) data.after_script = params.after_script;
+      data = Object.assign({}, data, params);
 
       let result = await this.Model.up(id, data);
       let username = this.getUsername();
@@ -821,6 +828,7 @@ class projectController extends baseController {
         username: username,
         typeid: id
       });
+      yapi.emitHook('project_up', result).then();
       ctx.body = yapi.commons.resReturn(result);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
@@ -884,8 +892,59 @@ class projectController extends baseController {
     }
   }
 
+  /**
+   * 编辑项目
+   * @interface /project/up_tag
+   * @method POST
+   * @category project
+   * @foldnumber 10
+   * @param {Number} id 项目id，不能为空
+   * @param {Array} [tag] 项目tag配置
+   * @param {String} [tag[].name] tag名称
+   * @param {String} [tag[].desc] tag描述
+   * @returns {Object}
+   * @example
+   */
+  async upTag(ctx) {
+    try {
+      let id = ctx.request.body.id;
+      let params = ctx.request.body;
+      if (!id) {
+        return (ctx.body = yapi.commons.resReturn(null, 405, '项目id不能为空'));
+      }
 
-   /**
+      if ((await this.checkAuth(id, 'project', 'edit')) !== true) {
+        return (ctx.body = yapi.commons.resReturn(null, 405, '没有权限'));
+      }
+
+      if (!params.tag || !Array.isArray(params.tag)) {
+        return (ctx.body = yapi.commons.resReturn(null, 405, 'tag参数格式有误'));
+      }
+
+      let projectData = await this.Model.get(id);
+      let data = {
+        up_time: yapi.commons.time()
+      };
+      data.tag = params.tag;
+
+      let result = await this.Model.up(id, data);
+      let username = this.getUsername();
+      yapi.commons.saveLog({
+        content: `<a href="/user/profile/${this.getUid()}">${username}</a> 更新了项目 <a href="/project/${id}/interface/api">${
+          projectData.name
+        }</a> 的tag`,
+        type: 'project',
+        uid: this.getUid(),
+        username: username,
+        typeid: id
+      });
+      ctx.body = yapi.commons.resReturn(result);
+    } catch (e) {
+      ctx.body = yapi.commons.resReturn(null, 402, e.message);
+    }
+  }
+
+  /**
    * 获取项目的环境变量值
    * @interface /project/get_env
    * @method GET
@@ -905,20 +964,18 @@ class projectController extends baseController {
         return (ctx.body = yapi.commons.resReturn(null, 405, '项目id不能为空'));
       }
 
-      if ((await this.checkAuth(project_id, 'project', 'edit')) !== true) {
-        return (ctx.body = yapi.commons.resReturn(null, 405, '没有权限'));
-      }
+      // 去掉权限判断
+      // if ((await this.checkAuth(project_id, 'project', 'edit')) !== true) {
+      //   return (ctx.body = yapi.commons.resReturn(null, 405, '没有权限'));
+      // }
 
       let env = await this.Model.getByEnv(project_id);
-      // console.log('project', projectData)
-    
+
       ctx.body = yapi.commons.resReturn(env);
     } catch (e) {
       ctx.body = yapi.commons.resReturn(null, 402, e.message);
     }
   }
-
-
 
   arrRepeat(arr, key) {
     const s = new Set();
@@ -1015,7 +1072,7 @@ class projectController extends baseController {
     let projectList = await this.Model.search(q);
     let groupList = await this.groupModel.search(q);
     let interfaceList = await this.interfaceModel.search(q);
-    
+
     let projectRules = [
       '_id',
       'name',
@@ -1044,7 +1101,6 @@ class projectController extends baseController {
       { key: 'up_time', alias: 'upTime' }
     ];
 
-
     projectList = commons.filterRes(projectList, projectRules);
     groupList = commons.filterRes(groupList, groupRules);
     interfaceList = commons.filterRes(interfaceList, interfaceRules);
@@ -1055,6 +1111,18 @@ class projectController extends baseController {
     };
 
     return (ctx.body = yapi.commons.resReturn(queryList, 0, 'ok'));
+  }
+
+  // 输入 swagger url  的时候node端请求数据
+  async swaggerUrl(ctx) {
+    try {
+      let ops = url.parse(ctx.request.query.url);
+      let result = await yapi.commons.createWebAPIRequest(ops);
+
+      ctx.body = yapi.commons.resReturn(result);
+    } catch (err) {
+      ctx.body = yapi.commons.resReturn(null, 402, err.message);
+    }
   }
 }
 

@@ -1,7 +1,6 @@
 import React, { PureComponent as Component } from 'react';
 import PropTypes from 'prop-types';
-// import { connect } from 'react-redux'
-import { Table, Select } from 'antd';
+import { Table, Select, Tooltip, Icon } from 'antd';
 import variable from '../../../../constants/variable';
 import { connect } from 'react-redux';
 const Option = Select.Option;
@@ -180,7 +179,14 @@ export default class ImportInterface extends Component {
         }
       },
       {
-        title: '状态',
+        title: (
+          <span>
+            状态{' '}
+            <Tooltip title="筛选满足条件的接口集合">
+              <Icon type="question-circle-o" />
+            </Tooltip>
+          </span>
+        ),
         dataIndex: 'status',
         render: text => {
           return (
@@ -191,18 +197,37 @@ export default class ImportInterface extends Component {
               <span className="tag-status undone">未完成</span>
             ))
           );
+        },
+        filters: [
+          {
+            text: '已完成',
+            value: 'done'
+          },
+          {
+            text: '未完成',
+            value: 'undone'
+          }
+        ],
+        onFilter: (value, record) => {
+          let arr = record.children.filter(item => {
+            return item.status.indexOf(value) === 0;
+          });
+          return arr.length > 0;
+          // record.status.indexOf(value) === 0
         }
       }
     ];
-    
+
     return (
       <div>
         <div className="select-project">
           <span>选择要导入的项目： </span>
           <Select value={this.state.project} style={{ width: 200 }} onChange={this.onChange}>
             {projectList.map(item => {
-              return (
-                item.projectname ? '' : <Option value={`${item._id}`} key={item._id}>
+              return item.projectname ? (
+                ''
+              ) : (
+                <Option value={`${item._id}`} key={item._id}>
                   {item.name}
                 </Option>
               );

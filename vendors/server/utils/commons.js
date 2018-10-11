@@ -8,6 +8,7 @@ const interfaceColModel = require('../models/interfaceCol.js');
 const interfaceCaseModel = require('../models/interfaceCase.js');
 const interfaceModel = require('../models/interface.js');
 const userModel = require('../models/user.js');
+const followModel = require('../models/follow.js');
 const json5 = require('json5');
 const _ = require('underscore');
 const Ajv = require('ajv');
@@ -17,23 +18,34 @@ const ejs = require('easy-json-schema');
 
 const jsf = require('json-schema-faker');
 const formats = require('../../common/formats');
+const http = require('http');
+
+jsf.extend ('mock', function () {
+  return {
+    mock: function (xx) {
+      return Mock.mock (xx);
+    }
+  };
+});
+
 const defaultOptions = {
   failOnInvalidTypes: false,
   failOnInvalidFormat: false
 };
 
-formats.forEach(item => {
-  item = item.name;
-  jsf.format(item, () => {
-    if (item === 'mobile') {
-      return jsf.random.randexp('^[1][34578][0-9]{9}$');
-    }
-    return Mock.mock('@' + item);
-  });
-});
+// formats.forEach(item => {
+//   item = item.name;
+//   jsf.format(item, () => {
+//     if (item === 'mobile') {
+//       return jsf.random.randexp('^[1][34578][0-9]{9}$');
+//     }
+//     return Mock.mock('@' + item);
+//   });
+// });
 
 exports.schemaToJson = function(schema, options = {}) {
   Object.assign(options, defaultOptions);
+  
   jsf.option(options);
   let result;
   try {
@@ -249,11 +261,12 @@ exports.handleVarPath = (pathname, params) => {
  * path第一位必需为 /, path 只允许由 字母数字-/_:.{}= 组成
  */
 exports.verifyPath = path => {
-  if (/^\/[a-zA-Z0-9\-\/_:!\.\{\}\=]*$/.test(path)) {
-    return true;
-  } else {
-    return false;
-  }
+  // if (/^\/[a-zA-Z0-9\-\/_:!\.\{\}\=]*$/.test(path)) {
+  //   return true;
+  // } else {
+  //   return false;
+  // }
+  return /^\/[a-zA-Z0-9\-\/_:!\.\{\}\=]*$/.test(path);
 };
 
 /**
@@ -273,6 +286,7 @@ exports.sandbox = (sandbox, script) => {
   script.runInContext(context, {
     timeout: 3000
   });
+
   return sandbox;
 };
 
@@ -503,6 +517,7 @@ function convertString(variable) {
 
 exports.runCaseScript = async function runCaseScript(params) {
   let script = params.script;
+  // script 是断言
   if (!script) {
     return yapi.commons.resReturn('ok');
   }
@@ -522,11 +537,13 @@ exports.runCaseScript = async function runCaseScript(params) {
   let result = {};
   try {
     result = yapi.commons.sandbox(context, script);
+
     result.logs = logs;
     return yapi.commons.resReturn(result);
   } catch (err) {
     logs.push(convertString(err));
     result.logs = logs;
+
     return yapi.commons.resReturn(result, 400, err.name + ': ' + err.message);
   }
 };
@@ -545,4 +562,104 @@ exports.getUserdata = async function getUserdata(uid, role) {
     email: userData.email
   };
 };
+// 邮件发送
+exports.sendNotice = async function(projectId, data) {
+  const followInst = yapi.getInst(followModel);
+  const userInst = yapi.getInst(userModel);
+  const projectInst = yapi.getInst(projectModel);
+  const list = await followInst.listByProjectId(projectId);
+  const starUsers = list.map(item => item.uid);
+
+  const projectList = await projectInst.get(projectId);
+  const projectMenbers = projectList.members
+    .filter(item => item.email_notice)
+    .map(item => item.uid);
+
+  const users = arrUnique(projectMenbers, starUsers);
+  const usersInfo = await userInst.findByUids(users);
+  const emails = usersInfo.map(item => item.email).join(',');
+
+  try {
+    yapi.commons.sendMail({
+      to: emails,
+      contents: data.content,
+      subject: data.title
+    });
+  } catch (e) {
+    yapi.commons.log('邮件发送失败：' + e, 'error');
+  }
+};
+
+function arrUnique(arr1, arr2) {
+  let arr = arr1.concat(arr2);
+  let res = arr.filter(function(item, index, arr) {
+    return arr.indexOf(item) === index;
+  });
+  return res;
+}
+
+// 处理mockJs脚本
+exports.handleMockScript = function(script, context) {
+  let sandbox = {
+    header: context.ctx.header,
+    query: context.ctx.query,
+    body: context.ctx.request.body,
+    mockJson: context.mockJson,
+    params: Object.assign({}, context.ctx.query, context.ctx.request.body),
+    resHeader: context.resHeader,
+    httpCode: context.httpCode,
+    delay: context.httpCode,
+    Random: Mock.Random
+  };
+  sandbox.cookie = {};
+
+  context.ctx.header.cookie &&
+    context.ctx.header.cookie.split(';').forEach(function(Cookie) {
+      var parts = Cookie.split('=');
+      sandbox.cookie[parts[0].trim()] = (parts[1] || '').trim();
+    });
+  sandbox = yapi.commons.sandbox(sandbox, script);
+  sandbox.delay = isNaN(sandbox.delay) ? 0 : +sandbox.delay;
+
+  context.mockJson = sandbox.mockJson;
+  context.resHeader = sandbox.resHeader;
+  context.httpCode = sandbox.httpCode;
+  context.delay = sandbox.delay;
+};
+
+
+
+exports.createWebAPIRequest = function(ops) {
+  return new Promise(function(resolve, reject) {
+    let req = '';
+    let http_client = http.request(
+      {
+        host: ops.hostname,
+        method: 'GET',
+        port: ops.port,
+        path: ops.path
+      },
+      function(res) {
+        res.on('error', function(err) {
+          reject(err);
+        });
+        res.setEncoding('utf8');
+        if (res.statusCode != 200) {
+          reject({message: 'statusCode != 200'});
+        } else {
+          res.on('data', function(chunk) {
+            req += chunk;
+          });
+          res.on('end', function() {
+            resolve(req);
+          });
+        }
+      }
+    );
+    http_client.on('error', (e) => {
+      reject({message: 'request error'});
+    });
+    http_client.end();
+  });
+}
 

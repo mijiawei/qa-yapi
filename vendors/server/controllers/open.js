@@ -13,7 +13,7 @@ const {
   handleCurrDomain,
   checkNameIsExistInArray
 } = require('../../common/postmanLib');
-const { handleParamsValue } = require('../../common/utils.js');
+const { handleParamsValue, ArrayToObject } = require('../../common/utils.js');
 const renderToHtml = require('../utils/reportHtml');
 const axios = require('axios');
 const HanldeImportData = require('../../common/HandleImportData');
@@ -51,6 +51,10 @@ class openController extends baseController {
           type: 'boolean',
           default: false
         },
+        download: {
+          type: 'boolean',
+          default: false
+        },
         closeRemoveAdditional: true
       },
       importData: {
@@ -60,8 +64,8 @@ class openController extends baseController {
         json: 'string',
         project_id: 'string',
         merge: {
-          type: 'boolean',
-          default: false
+          type: 'string',
+          default: 'normal'
         }
       }
     };
@@ -69,7 +73,6 @@ class openController extends baseController {
 
   async importData(ctx) {
     let type = ctx.params.type;
-    let url = ctx.params.url;
     let content = ctx.params.json;
     let project_id = ctx.params.project_id;
     let dataSync = ctx.params.merge;
@@ -94,7 +97,7 @@ class openController extends baseController {
 
     let successMessage;
     let errorMessage = [];
-    let data = await HanldeImportData(
+    await HanldeImportData(
       res,
       project_id,
       selectCatid,
@@ -122,15 +125,17 @@ class openController extends baseController {
     ctx.body = 'projectInterfaceData';
   }
 
-  handleValue(val) {
-    return handleParamsValue(val, this.records);
+  handleValue(val, global) {
+    let globalValue = ArrayToObject(global);
+    let context = Object.assign({}, {global: globalValue}, this.records);
+    return handleParamsValue(val, context);
   }
 
   handleEvnParams(params) {
     let result = [];
     Object.keys(params).map(item => {
       if (/env_/gi.test(item)) {
-        let curEnv = yapi.commons.trim(params[item])
+        let curEnv = yapi.commons.trim(params[item]);
         let value = { curEnv, project_id: item.split('_')[1] };
         result.push(value);
       }
@@ -138,12 +143,12 @@ class openController extends baseController {
     return result;
   }
   async runAutoTest(ctx) {
-    if(!this.$tokenAuth ){
-      return ctx.body = yapi.commons.resReturn(null, 40022, 'token 验证失败');
+    if (!this.$tokenAuth) {
+      return (ctx.body = yapi.commons.resReturn(null, 40022, 'token 验证失败'));
     }
     // console.log(1231312)
     const token = ctx.query.token;
-    
+
     const projectId = ctx.params.project_id;
     const startTime = new Date().getTime();
     const records = (this.records = {});
@@ -151,7 +156,7 @@ class openController extends baseController {
     const testList = [];
     let id = ctx.params.id;
     let curEnvList = this.handleEvnParams(ctx.params);
-  
+
     let colData = await this.interfaceColModel.get(id);
     if (!colData) {
       return (ctx.body = yapi.commons.resReturn(null, 40022, 'id值不存在'));
@@ -172,7 +177,6 @@ class openController extends baseController {
       let curEnvItem = _.find(curEnvList, key => {
         return key.project_id == item.project_id;
       });
-      
 
       item.case_env = curEnvItem ? curEnvItem.curEnv || item.case_env : item.case_env;
       item.req_headers = this.handleReqHeader(item.req_headers, projectEvn.env, item.case_env);
@@ -192,7 +196,7 @@ class openController extends baseController {
         params: result.params,
         body: result.res_body
       };
-      testList.push(result); 
+      testList.push(result);
     }
 
     function getMessage(testList) {
@@ -202,8 +206,12 @@ class openController extends baseController {
         msg = '';
       testList.forEach(item => {
         len++;
-        if (item.code === 0) successNum++;
-        else failedNum++;
+        if (item.code === 0) {
+          successNum++;
+        }
+        else {
+          failedNum++;
+        }
       });
       if (failedNum === 0) {
         msg = `一共 ${len} 测试用例，全部验证通过`;
@@ -228,7 +236,7 @@ class openController extends baseController {
       let autoTestUrl = `http://${
         ctx.request.host
       }/api/open/run_auto_test?id=${id}&token=${token}&mode=${ctx.params.mode}`;
-      this.sendNotice(projectId, {
+      yapi.commons.sendNotice(projectId, {
         title: `YApi自动化测试报告`,
         content: `
         <html>
@@ -246,7 +254,10 @@ class openController extends baseController {
         </html>`
       });
     }
-
+    let mode = ctx.params.mode || 'html';
+    if(ctx.params.download === true) {
+      ctx.set('Content-Disposition', `attachment; filename=test.${mode}`);
+    }
     if (ctx.params.mode === 'json') {
       return (ctx.body = reportsResult);
     } else {
@@ -317,37 +328,6 @@ class openController extends baseController {
     return result;
   }
 
-  async sendNotice(projectId, data) {
-    const list = await this.followModel.listByProjectId(projectId);
-    const starUsers = list.map(item => item.uid);
-
-    const projectList = await this.projectModel.get(projectId);
-    const projectMenbers = projectList.members.filter(item => item.email_notice).map(item => item.uid);
-
-
-    const users = this.arrUnique(projectMenbers, starUsers);
-    const usersInfo = await this.userModel.findByUids(users);
-    const emails = usersInfo.map(item => item.email).join(',');
-
-    try {
-      yapi.commons.sendMail({
-        to: emails,
-        contents: data.content,
-        subject: data.title
-      });
-    } catch (e) {
-      yapi.commons.log('邮件发送失败：' + e, 'error');
-    }
-  }
-
-  arrUnique(arr1, arr2) {
-    let arr = arr1.concat(arr2);
-    let res = arr.filter(function(item, index, arr) {
-      return arr.indexOf(item) === index;
-    });
-    return res;
-  }
-
   async handleScriptTest(interfaceData, response, validRes, requestParams) {
     if (interfaceData.enable_script !== true) {
       return null;
@@ -374,9 +354,8 @@ class openController extends baseController {
   }
 
   handleReqHeader(req_header, envData, curEnvName) {
-   
     let currDomain = handleCurrDomain(envData, curEnvName);
-    
+
     let header = currDomain.header;
     header.forEach(item => {
       if (!checkNameIsExistInArray(item.name, req_header)) {
