@@ -24,8 +24,10 @@ module.exports = {
         "comma-dangle": ["error", "never"],
         "no-console": ["off"],
         "import/no-unresolved": ["off"],
-        "react/no-find-dom-node": ["off"]
+        "react/no-find-dom-node": ["off"],
         // "react/no-unescaped-entities": 0
+        "no-unused-vars": 0,
+        "no-undef": 0
     }
 };
 

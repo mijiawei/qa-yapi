@@ -68,7 +68,7 @@ const InsertCodeMap = [
   },
   {
     code: "assert.equal(body.username, " + a + ")",
-    title: '断言对象mysql'
+    title: '断言对象mysql返回值'
   }
 
 ];

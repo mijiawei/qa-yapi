@@ -1,4 +1,3 @@
-/* eslint-disable */
 import React, { PureComponent as Component } from 'react'
 import PropTypes from 'prop-types'
 import { Form, Input, Select, Button } from 'antd';
@@ -34,7 +33,7 @@ class AddInterfaceForm extends Component {
           console.log(values);
           console.log(values['ip']);
             sname =  values['sname'];
-          axios.get('http://101.132.148.57:8888', {
+          axios.get('http://127.0.0.1:8888', {
               params: { 'ip':values['ip'],
               'user': values['user'],
               'password': values['password'],

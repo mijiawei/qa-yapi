@@ -156,7 +156,7 @@ class interfaceController extends baseController {
   }
 
   /**
-   * Created by wdr520 on 2018/9/6.
+   * Created on 2018/9/6.
    */
 // var mysql  = require('mysql');
 // 出入后台的数据
