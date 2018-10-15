@@ -34,8 +34,7 @@ const {
   crossRequest,
   checkNameIsExistInArray
 } = require('common/postmanLib.js');
-var storage=window.localStorage;
-var a=storage.a;
+
 const HTTP_METHOD = constants.HTTP_METHOD;
 const InputGroup = Input.Group;
 const Option = Select.Option;
@@ -65,12 +64,7 @@ const InsertCodeMap = [
   {
     code: 'assert.notDeepEqual(body, {"errcode": 0})',
     title: '断言对象 body 不等于 {"errcode": 0}'
-  },
-  {
-    code: "assert.equal(body.username, " + a + ")",
-    title: '断言对象mysql返回值'
   }
-
 ];
 
 const ParamsNameComponent = props => {
@@ -276,10 +270,8 @@ export default class Run extends Component {
   }
 
   onOpenTest = d => {
-
     this.setState({
       test_script: d.text
-   //   test_script: "assert.equal(body.username, " + ss + ")"
     });
   };
 
@@ -375,10 +367,14 @@ export default class Run extends Component {
   };
 
   changeParam = (name, v, index, key) => {
+    
     key = key || 'value';
     const pathParam = deepCopyJson(this.state[name]);
 
     pathParam[index][key] = v;
+    if (key === 'value') {
+      pathParam[index].enable = !!v;
+    }
     this.setState({
       [name]: pathParam
     });
@@ -388,7 +384,7 @@ export default class Run extends Component {
     const bodyForm = deepCopyJson(this.state.req_body_form);
     key = key || 'value';
     if (key === 'value') {
-      bodyForm[index].enable = true;
+      bodyForm[index].enable = !!v;
       if (bodyForm[index].type === 'file') {
         bodyForm[index].value = 'file_' + index;
       } else {
@@ -949,7 +945,6 @@ export default class Run extends Component {
                   <AceEditor
                     onChange={this.onOpenTest}
                     className="case-script"
-                //    data={this.state.test_script}
                     data={this.state.test_script}
                     ref={aceEditor => {
                       this.aceEditor = aceEditor;

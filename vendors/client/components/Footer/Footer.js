@@ -12,14 +12,7 @@ class Footer extends Component {
   static propTypes = {
     footList: PropTypes.array
   };
-
-    render() {
-        return (
-          <div className="footer-wrapper">
-          </div>
-        );
-    }
-  render_bak() {
+  render() {
     return (
       <div className="footer-wrapper">
         <Row className="footer-container">

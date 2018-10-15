@@ -40,7 +40,6 @@ class baseController {
       '/api/open/run_auto_test',
       '/api/open/import_data',
       '/api/interface/add',
-      '/api/interface/mysql',
       '/api/interface/save',
       '/api/interface/up',
       '/api/interface/add_cat'
