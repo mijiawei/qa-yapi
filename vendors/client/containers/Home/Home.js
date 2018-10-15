@@ -2,7 +2,8 @@ import './Home.scss';
 import React, { PureComponent as Component } from 'react';
 import { connect } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Row, Col, Button, Icon, Card } from 'antd';
+// import { Row, Col, Button, Icon, Card } from 'antd';
+import { Row, Col, Button } from 'antd';
 import PropTypes from 'prop-types';
 import { withRouter } from 'react-router';
 import { getImgPath } from '../../common.js';
@@ -25,16 +26,19 @@ const HomeGuest = () => (
           <Col span={24}>
             <div className="home-header">
               <a href="#" className="item">
-                YAPI
+                API测试
               </a>
               <a
                 target="_blank"
                 rel="noopener noreferrer"
-                href="https://yapi.ymfe.org"
+                href="/"
                 className="item"
               >
                 使用文档
               </a>
+              <a target="_blank" rel="noopener noreferrer" href="https://www.baidu.com" className="item"> 测试1 </a>
+              <a target="_blank" rel="noopener noreferrer" href="https://www.baidu.com" className="item"> 测试2 </a>
+              <a target="_blank" rel="noopener noreferrer" href="https://www.baidu.com" className="item"> 测试3 </a>
             </div>
           </Col>
         </Row>
@@ -43,7 +47,7 @@ const HomeGuest = () => (
             <div className="home-des">
               <div className="logo">
                 <LogoSVG length="72px" />
-                <span className="name">YAPI</span>
+                <span className="name">API 测试</span>
               </div>
               <div className="detail">
                 高效、易用、功能强大的API管理平台<br />
@@ -67,7 +71,7 @@ const HomeGuest = () => (
         </Row>
       </div>
     </div>
-    <div className="feat-part section-feature">
+    {/*    <div className="feat-part section-feature">
       <div className="container home-section">
         <h3 className="title">为API开发者设计的管理平台</h3>
         <span className="desc">
@@ -317,7 +321,7 @@ const HomeGuest = () => (
           </Col>
         </Row>
       </div>
-    </div>
+    </div>*/}
   </div>
 );
 HomeGuest.propTypes = {
@@ -358,7 +362,7 @@ class Home extends Component {
     return (
       <div className="home-main">
         <HomeGuest introList={this.props.introList} />
-        <div className="row-tip">
+        {/*        <div className="row-tip">
           <div className="container">
             <div className="tip-title">
               <h3 className="title">准备好使用了吗？</h3>
@@ -372,14 +376,14 @@ class Home extends Component {
                   </Button>
                 </Link>
                 <Button className="btn-home btn-home-normal">
-                  <a target="_blank" rel="noopener noreferrer" href="https://yapi.ymfe.org">
+                  <a target="_blank" rel="noopener noreferrer" href="/">
                     使用文档
                   </a>
                 </Button>
               </div>
             </div>
           </div>
-        </div>
+        </div>*/}
       </div>
     );
   }
