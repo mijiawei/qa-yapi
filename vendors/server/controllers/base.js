@@ -40,7 +40,6 @@ class baseController {
       '/api/open/run_auto_test',
       '/api/open/import_data',
       '/api/interface/add',
-      '/api/interface/mysql',
       '/api/interface/save',
       '/api/interface/up',
       '/api/interface/add_cat'
@@ -119,6 +118,15 @@ class baseController {
       return false;
     }
   }
+  
+  async checkRegister() {
+    // console.log('config', yapi.WEBCONFIG);
+    if (yapi.WEBCONFIG.closeRegister) {
+      return false;
+    } else {
+      return true;
+    }
+  }
 
   async checkLDAP() {
     // console.log('config', yapi.WEBCONFIG);
@@ -152,6 +160,7 @@ class baseController {
     }
 
     body.ladp = await this.checkLDAP();
+    body.canRegister = await this.checkRegister();
     ctx.body = body;
   }
 

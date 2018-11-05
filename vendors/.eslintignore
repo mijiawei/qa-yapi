@@ -1,2 +1,4 @@
 node_modules/*
 common/json-schema-mockjs.js
+client/*
+exts/*

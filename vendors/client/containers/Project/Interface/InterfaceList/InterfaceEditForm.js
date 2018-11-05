@@ -219,6 +219,7 @@ class InterfaceEditForm extends Component {
     this.state = this.initState(curdata);
   }
 
+// 保存功能
   handleSubmit = e => {
     e.preventDefault();
     this.setState({
@@ -232,8 +233,38 @@ class InterfaceEditForm extends Component {
               submitStatus: false
             });
           }
-        }, 3000);
+        }, 3000);   
+          var title1 = this.state.title;
         if (!err) {
+
+    ///  数据库提交--start
+          console.log("I'm a boy1");
+          console.log(values);
+          console.log(values['sql']);
+          axios.get('http://127.0.0.1:8889', {
+              params: {     
+              'sql': values['sql'],
+              'type':'a',
+            }
+          }).then(function (response) {
+              
+              var data = response.data[0][sname];
+              var jsonData = JSON.stringify(data);           
+              console.log('aaaa');
+                 var storage=window.localStorage; 
+                 var ss = title1;
+                 storage[ss]=jsonData;
+                 var a=storage.a;                
+                 console.log(a);
+              console.log('aaaa');    
+          }).catch(function (error) {
+              console.log(error);
+          });
+
+      ///  数据库提交--end
+
+
+
           values.desc = this.editor.getHtml();
           values.markdown = this.editor.getMarkdown();
           if (values.res_body_type === 'json') {
@@ -821,6 +852,7 @@ class InterfaceEditForm extends Component {
             基本设置
           </h2>
           <div className="panel-sub">
+            // 接口名称
             <FormItem className="interface-edit-item" {...formItemLayout} label="接口名称">
               {getFieldDecorator('title', {
                 initialValue: this.state.title,
@@ -828,6 +860,27 @@ class InterfaceEditForm extends Component {
               })(<Input id="title" placeholder="接口名称" />)}
             </FormItem>
 
+
+       /// start
+             // 数据库语句
+            <FormItem className="interface-edit-item" {...formItemLayout} label="数据库语句">
+              {getFieldDecorator('sql', {
+                initialValue: this.state.sql,
+                rules: nameLengthLimit('接口')
+              })(<Input  id="sql" placeholder="数据库语句" />)}
+            </FormItem>
+            // 数据库返回key
+            <FormItem className="interface-edit-item" {...formItemLayout} label="数据库返回key">
+              {getFieldDecorator('que', {
+                initialValue: this.state.que,
+                rules: nameLengthLimit('接口')
+              })(<Input  id="que" placeholder="数据库返回key" />)}
+            </FormItem>
+
+       /// end
+
+
+            // 接口分类
             <FormItem className="interface-edit-item" {...formItemLayout} label="选择分类">
               {getFieldDecorator('catid', {
                 initialValue: this.state.catid + '',

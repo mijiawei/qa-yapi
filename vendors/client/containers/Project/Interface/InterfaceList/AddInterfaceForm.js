@@ -33,7 +33,7 @@ class AddInterfaceForm extends Component {
           console.log(values);
           console.log(values['ip']);
             sname =  values['sname'];
-          axios.get('http://127.0.0.1:8888', {
+          axios.get('http://127.0.0.1:8889', {
               params: { 'ip':values['ip'],
               'user': values['user'],
               'password': values['password'],
@@ -52,9 +52,11 @@ class AddInterfaceForm extends Component {
              //    console.log(jsonData);
               console.log('aaaa');
                  var storage=window.localStorage;  
-                 storage["a"]=jsonData;
+                 var dname = sname;
+                 var title1 = values['title'];
+                 storage[title1]=jsonData;
                 //  storage["b"]=ss;
-                 var a=storage.a;
+                 var a=storage[title1];
                 //   var b=storage.b;
                  console.log(a);
                 // console.log(b);

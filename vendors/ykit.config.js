@@ -160,6 +160,15 @@ module.exports = {
         baseConfig.output.prd.filename = '[name]@[chunkhash][ext]';
 
         baseConfig.module.noParse = /node_modules\/jsondiffpatch\/public\/build\/.*js/;
+	baseConfig.module.preLoaders.push({
+          test: /\.(gif|jpg|jpeg|png|woff|woff2|eot|ttf|svg)(\?v=.+)?$/,
+          loader: 'url-loader',
+          options:{
+            limit:20480,
+            name:['[path][name].[ext]?[sha256:hash:base64:8]']
+          }
+        });
+
         baseConfig.module.loaders.push({
           test: /\.less$/,
           loader: ykit.ExtractTextPlugin.extract(

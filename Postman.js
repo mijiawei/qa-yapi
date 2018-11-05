@@ -38,13 +38,42 @@ const {
 var storage=window.localStorage;
 var aa='';
 var ss='';
-
 const HTTP_METHOD = constants.HTTP_METHOD;
 const InputGroup = Input.Group;
 const Option = Select.Option;
 const Panel = Collapse.Panel;
-console.log(aa);
-var InsertCodeMap = [];
+
+const InsertCodeMap = [
+  {
+    code: 'assert.equal(status, 200)',
+    title: '断言 httpCode 等于 200'
+  },
+  {
+    code: 'assert.equal(body.errcode, 0)',
+    title: '断言返回数据 errcode 是 0'
+  },
+  {
+    code: 'assert.notEqual(status, 404)',
+    title: '断言 httpCode 不是 404'
+  },
+  {
+    code: 'assert.notEqual(body.errcode, 40000)',
+    title: '断言返回数据 errcode 不是 40000'
+  },
+  {
+    code: 'assert.deepEqual(body, {"errcode": 0})',
+    title: '断言对象 body 等于 {"errcode": 0}'
+  },
+  {
+    code: 'assert.notDeepEqual(body, {"errcode": 0})',
+    title: '断言对象 body 不等于 {"errcode": 0}'
+  },
+  {
+    code: "assert.equal(body.username, " + aa + ")",
+    title: '断言对象mysql返回值'+aa
+  }
+
+];
 
 const ParamsNameComponent = props => {
   const { example, desc, name } = props;
@@ -180,42 +209,7 @@ export default class Run extends Component {
         required: true
       });
       body = JSON.stringify(result.data);
-     console.log(data.casename);
-     ss = data.casename;
-     console.log(ss);
-     aa=storage[ss];
-     console.log(aa);
-   InsertCodeMap = [
-  {
-    code: 'assert.equal(status, 200)',
-    title: '断言 httpCode 等于 200'
-  },
-  {
-    code: 'assert.equal(body.errcode, 0)',
-    title: '断言返回数据 errcode 是 0'
-  },
-  {
-    code: 'assert.notEqual(status, 404)',
-    title: '断言 httpCode 不是 404'
-  },
-  {
-    code: 'assert.notEqual(body.errcode, 40000)',
-    title: '断言返回数据 errcode 不是 40000'
-  },
-  {
-    code: 'assert.deepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 等于 {"errcode": 0}'
-  },
-  {
-    code: 'assert.notDeepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 不等于 {"errcode": 0}'
-  },
-  {
-    code: "assert.equal(body.username, " + aa + ")",
-    title: '断言对象mysql返回值'+aa
-  }
-
-];
+      
     }
 
     this.setState(
@@ -231,9 +225,12 @@ export default class Run extends Component {
       },
       () => this.props.type === 'inter' && this.initEnvState(data.case_env, data.env)
     );
-   
+    console.log(data.casename);
+     ss = data.casename;
+     console.log(ss);
+     aa=storage[ss];
+     console.log(aa);
   }
-
 
   initEnvState(case_env, env) {
     let headers = this.handleReqHeader(case_env, env);
@@ -550,42 +547,6 @@ export default class Run extends Component {
       hasPlugin
     } = this.state;
      console.log(this.state);
-        console.log(this.state.casename);
-     ss = this.state.casename;
-     console.log(ss);
-     aa=storage[ss];
-     console.log(aa);
-   InsertCodeMap = [
-  {
-    code: 'assert.equal(status, 200)',
-    title: '断言 httpCode 等于 200'
-  },
-  {
-    code: 'assert.equal(body.errcode, 0)',
-    title: '断言返回数据 errcode 是 0'
-  },
-  {
-    code: 'assert.notEqual(status, 404)',
-    title: '断言 httpCode 不是 404'
-  },
-  {
-    code: 'assert.notEqual(body.errcode, 40000)',
-    title: '断言返回数据 errcode 不是 40000'
-  },
-  {
-    code: 'assert.deepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 等于 {"errcode": 0}'
-  },
-  {
-    code: 'assert.notDeepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 不等于 {"errcode": 0}'
-  },
-  {
-    code: "assert.equal(body.username, " + aa + ")",
-    title: '断言对象mysql返回值'+aa
-  }
-
-];
     return (
       <div className="interface-test postman">
         {this.state.modalVisible && (

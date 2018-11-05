@@ -10,6 +10,8 @@ var Sql='';
 var addSql='';
 var modSql='';
 var delSql='';
+var type='';
+var query1='';
 var fs = require('fs');
 var path = require('path');
 var querystring = require('querystring');
@@ -18,10 +20,11 @@ http.createServer(function (request, response) {
                    response.writeHead(200,{'Content-Type':'text/html'});
                    response.writeHead(200, {'Content-Type': 'text/json;charset=utf-8','Access-Control-Allow-Origin':'*'}); 
                                
-                // var name = "aaaa";
+          //       var name = "aaaa";
                 var pathname = url.parse(request.url).pathname;
                 var arg = url.parse(request.url).query;
-                
+                 type =  querystring.parse(arg).type; 
+        if(!type){        
             ip =  querystring.parse(arg).ip; 
             user =  querystring.parse(arg).user; 
             password =  querystring.parse(arg).password; 
@@ -29,6 +32,9 @@ http.createServer(function (request, response) {
             database =  querystring.parse(arg).database; 
             Sql =  querystring.parse(arg).sql; 
 
+            }else{
+             Sql =  querystring.parse(arg).sql;            
+            }
             var connection = mysql.createConnection({
                 host     : ip,
                 user     : user,
@@ -36,7 +42,7 @@ http.createServer(function (request, response) {
                 port: post,
                 database: database
             });
-         connection.connect();
+               connection.connect();
                 connection.query(Sql, function (err, result) {
                     if (err) {
                         console.log('[SELECT ERROR] - ', err.message);
@@ -51,8 +57,8 @@ http.createServer(function (request, response) {
 
 
 
-  // response.end(name);
+ //  response.end(name);
  
-                         }).listen(8888);
+                         }).listen(8889);
     
     
