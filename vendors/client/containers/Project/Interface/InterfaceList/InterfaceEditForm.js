@@ -852,7 +852,6 @@ class InterfaceEditForm extends Component {
             基本设置
           </h2>
           <div className="panel-sub">
-            // 接口名称
             <FormItem className="interface-edit-item" {...formItemLayout} label="接口名称">
               {getFieldDecorator('title', {
                 initialValue: this.state.title,
@@ -860,27 +859,17 @@ class InterfaceEditForm extends Component {
               })(<Input id="title" placeholder="接口名称" />)}
             </FormItem>
 
-
-       /// start
-             // 数据库语句
             <FormItem className="interface-edit-item" {...formItemLayout} label="数据库语句">
               {getFieldDecorator('sql', {
-                initialValue: this.state.sql,
-                rules: nameLengthLimit('接口')
+                initialValue: this.state.sql
               })(<Input  id="sql" placeholder="数据库语句" />)}
             </FormItem>
-            // 数据库返回key
             <FormItem className="interface-edit-item" {...formItemLayout} label="数据库返回key">
               {getFieldDecorator('que', {
-                initialValue: this.state.que,
-                rules: nameLengthLimit('接口')
+                initialValue: this.state.que
               })(<Input  id="que" placeholder="数据库返回key" />)}
             </FormItem>
 
-       /// end
-
-
-            // 接口分类
             <FormItem className="interface-edit-item" {...formItemLayout} label="选择分类">
               {getFieldDecorator('catid', {
                 initialValue: this.state.catid + '',
