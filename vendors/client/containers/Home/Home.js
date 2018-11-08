@@ -28,17 +28,10 @@ const HomeGuest = () => (
               <a href="#" className="item">
                 API测试
               </a>
-              <a
-                target="_blank"
-                rel="noopener noreferrer"
-                href="/"
-                className="item"
-              >
-                使用文档
-              </a>
-              <a target="_blank" rel="noopener noreferrer" href="https://www.baidu.com" className="item"> 测试1 </a>
-              <a target="_blank" rel="noopener noreferrer" href="https://www.baidu.com" className="item"> 测试2 </a>
-              <a target="_blank" rel="noopener noreferrer" href="https://www.baidu.com" className="item"> 测试3 </a>
+              <a target="_blank" rel="noopener noreferrer" href="http://119.254.102.109/qadoc/" className="item"> 使用文档 </a>
+              <a target="_blank" rel="noopener noreferrer" href="http://qastar.baixing.cn:5000" className="item"> Thrift测试 </a>
+              <a target="_blank" rel="noopener noreferrer" href="http://172.31.1.4:30815/swagger-ui.html" className="item"> Swagger文档 </a>
+              <a target="_blank" rel="noopener noreferrer" href="/" className="item"> 占位 </a>
             </div>
           </Col>
         </Row>

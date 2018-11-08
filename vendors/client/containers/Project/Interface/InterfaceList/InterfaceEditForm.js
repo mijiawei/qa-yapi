@@ -12,17 +12,17 @@ import mockEditor from 'client/components/AceEditor/mockEditor';
 import AceEditor from 'client/components/AceEditor/AceEditor';
 import axios from 'axios';
 import { MOCK_SOURCE } from '../../../../constants/variable.js';
+import Editor from 'common/tui-editor/dist/tui-editor-Editor-all.min.js';
 const jSchema = require('json-schema-editor-visual');
 const ResBodySchema = jSchema({ lang: 'zh_CN', mock: MOCK_SOURCE });
 const ReqBodySchema = jSchema({ lang: 'zh_CN', mock: MOCK_SOURCE });
 const TabPane = Tabs.TabPane;
 
-require('codemirror/lib/codemirror.css'); // codemirror
-require('tui-editor/dist/tui-editor.css'); // editor ui
-require('tui-editor/dist/tui-editor-contents.css'); // editor content
-require('highlight.js/styles/github.css'); // code block highlight
+
+require('common/tui-editor/dist/tui-editor.css'); // editor ui
+require('common/tui-editor/dist/tui-editor-contents.css'); // editor content
 require('./editor.css');
-var Editor = require('tui-editor');
+
 
 function checkIsJsonSchema(json) {
   try {
@@ -219,7 +219,6 @@ class InterfaceEditForm extends Component {
     this.state = this.initState(curdata);
   }
 
-// 保存功能
   handleSubmit = e => {
     e.preventDefault();
     this.setState({
@@ -233,38 +232,8 @@ class InterfaceEditForm extends Component {
               submitStatus: false
             });
           }
-        }, 3000);   
-          var title1 = this.state.title;
+        }, 3000);
         if (!err) {
-
-    ///  数据库提交--start
-          console.log("I'm a boy1");
-          console.log(values);
-          console.log(values['sql']);
-          axios.get('http://127.0.0.1:8889', {
-              params: {     
-              'sql': values['sql'],
-              'type':'a',
-            }
-          }).then(function (response) {
-              
-              var data = response.data[0][sname];
-              var jsonData = JSON.stringify(data);           
-              console.log('aaaa');
-                 var storage=window.localStorage; 
-                 var ss = title1;
-                 storage[ss]=jsonData;
-                 var a=storage.a;                
-                 console.log(a);
-              console.log('aaaa');    
-          }).catch(function (error) {
-              console.log(error);
-          });
-
-      ///  数据库提交--end
-
-
-
           values.desc = this.editor.getHtml();
           values.markdown = this.editor.getMarkdown();
           if (values.res_body_type === 'json') {
@@ -857,17 +826,6 @@ class InterfaceEditForm extends Component {
                 initialValue: this.state.title,
                 rules: nameLengthLimit('接口')
               })(<Input id="title" placeholder="接口名称" />)}
-            </FormItem>
-
-            <FormItem className="interface-edit-item" {...formItemLayout} label="数据库语句">
-              {getFieldDecorator('sql', {
-                initialValue: this.state.sql
-              })(<Input  id="sql" placeholder="数据库语句" />)}
-            </FormItem>
-            <FormItem className="interface-edit-item" {...formItemLayout} label="数据库返回key">
-              {getFieldDecorator('que', {
-                initialValue: this.state.que
-              })(<Input  id="que" placeholder="数据库返回key" />)}
             </FormItem>
 
             <FormItem className="interface-edit-item" {...formItemLayout} label="选择分类">

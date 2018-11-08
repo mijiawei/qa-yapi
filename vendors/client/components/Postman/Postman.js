@@ -34,17 +34,38 @@ const {
   crossRequest,
   checkNameIsExistInArray
 } = require('common/postmanLib.js');
-///
-var storage=window.localStorage;
-var aa='';
-var ss='';
 
 const HTTP_METHOD = constants.HTTP_METHOD;
 const InputGroup = Input.Group;
 const Option = Select.Option;
 const Panel = Collapse.Panel;
-console.log(aa);
-var InsertCodeMap = [];
+
+const InsertCodeMap = [
+  {
+    code: 'assert.equal(status, 200)',
+    title: '断言 httpCode 等于 200'
+  },
+  {
+    code: 'assert.equal(body.errcode, 0)',
+    title: '断言返回数据 errcode 是 0'
+  },
+  {
+    code: 'assert.notEqual(status, 404)',
+    title: '断言 httpCode 不是 404'
+  },
+  {
+    code: 'assert.notEqual(body.errcode, 40000)',
+    title: '断言返回数据 errcode 不是 40000'
+  },
+  {
+    code: 'assert.deepEqual(body, {"errcode": 0})',
+    title: '断言对象 body 等于 {"errcode": 0}'
+  },
+  {
+    code: 'assert.notDeepEqual(body, {"errcode": 0})',
+    title: '断言对象 body 不等于 {"errcode": 0}'
+  }
+];
 
 const ParamsNameComponent = props => {
   const { example, desc, name } = props;
@@ -127,7 +148,7 @@ export default class Run extends Component {
         })
       : 0;
     index = index === -1 ? 0 : index;
-     
+
     let req_header = [].concat(this.props.data.req_headers || []);
     let header = [].concat(env[index].header || []);
     header.forEach(item => {
@@ -151,14 +172,13 @@ export default class Run extends Component {
       case_env: value,
       req_headers: headers
     });
-  
   };
 
   async initState(data) {
     if (!this.checkInterfaceData(data)) {
       return null;
     }
-    
+
     const { req_body_other, req_body_type, req_body_is_json_schema } = data;
     let body = req_body_other;
     // 运行时才会进行转换
@@ -180,42 +200,6 @@ export default class Run extends Component {
         required: true
       });
       body = JSON.stringify(result.data);
-     console.log(data.casename);
-     ss = data.casename;
-     console.log(ss);
-     aa=storage[ss];
-     console.log(aa);
-   InsertCodeMap = [
-  {
-    code: 'assert.equal(status, 200)',
-    title: '断言 httpCode 等于 200'
-  },
-  {
-    code: 'assert.equal(body.errcode, 0)',
-    title: '断言返回数据 errcode 是 0'
-  },
-  {
-    code: 'assert.notEqual(status, 404)',
-    title: '断言 httpCode 不是 404'
-  },
-  {
-    code: 'assert.notEqual(body.errcode, 40000)',
-    title: '断言返回数据 errcode 不是 40000'
-  },
-  {
-    code: 'assert.deepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 等于 {"errcode": 0}'
-  },
-  {
-    code: 'assert.notDeepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 不等于 {"errcode": 0}'
-  },
-  {
-    code: "assert.equal(body.username, " + aa + ")",
-    title: '断言对象mysql返回值'+aa
-  }
-
-];
     }
 
     this.setState(
@@ -231,13 +215,11 @@ export default class Run extends Component {
       },
       () => this.props.type === 'inter' && this.initEnvState(data.case_env, data.env)
     );
-   
   }
-
 
   initEnvState(case_env, env) {
     let headers = this.handleReqHeader(case_env, env);
-   
+
     this.setState(
       {
         req_headers: headers,
@@ -249,7 +231,6 @@ export default class Run extends Component {
           this.setState({
             case_env: this.state.env[0].name
           });
-          console.log(this.state.env[0].name);
         }
       }
     );
@@ -286,14 +267,11 @@ export default class Run extends Component {
     return handleParamsValue(val, {
       global: globalValue
     });
-    
   }
 
   onOpenTest = d => {
-
     this.setState({
       test_script: d.text
-   //   test_script: "assert.equal(body.username, " + ss + ")"
     });
   };
 
@@ -330,7 +308,6 @@ export default class Run extends Component {
         statusText: result.res.statusText,
         runTime: result.runTime
       };
-      console.log(result);
     } catch (data) {
       result = {
         header: data.header,
@@ -338,7 +315,6 @@ export default class Run extends Component {
         status: null,
         statusText: data.message
       };
-      console.log(result);
     }
     if (this.state.loading === true) {
       this.setState({
@@ -374,7 +350,6 @@ export default class Run extends Component {
       test_res_header: result.header,
       test_res_body: result.body
     });
-     console.log(result);
   };
 
   // 返回数据与定义数据的比较判断
@@ -386,17 +361,20 @@ export default class Run extends Component {
       const schema = json5_parse(res_body);
       const params = json5_parse(test_res_body);
       validResult = schemaValidator(schema, params);
-      console.log(params);
     }
 
     return validResult;
   };
 
   changeParam = (name, v, index, key) => {
+    
     key = key || 'value';
     const pathParam = deepCopyJson(this.state[name]);
 
     pathParam[index][key] = v;
+    if (key === 'value') {
+      pathParam[index].enable = !!v;
+    }
     this.setState({
       [name]: pathParam
     });
@@ -406,7 +384,7 @@ export default class Run extends Component {
     const bodyForm = deepCopyJson(this.state.req_body_form);
     key = key || 'value';
     if (key === 'value') {
-      bodyForm[index].enable = true;
+      bodyForm[index].enable = !!v;
       if (bodyForm[index].type === 'file') {
         bodyForm[index].value = 'file_' + index;
       } else {
@@ -524,8 +502,6 @@ export default class Run extends Component {
       envModalVisible: false,
       case_env: newEnv[index].name
     });
-   
-
   };
 
   handleEnvCancel = () => {
@@ -549,43 +525,7 @@ export default class Run extends Component {
       inputValue,
       hasPlugin
     } = this.state;
-     console.log(this.state);
-        console.log(this.state.casename);
-     ss = this.state.casename;
-     console.log(ss);
-     aa=storage[ss];
-     console.log(aa);
-   InsertCodeMap = [
-  {
-    code: 'assert.equal(status, 200)',
-    title: '断言 httpCode 等于 200'
-  },
-  {
-    code: 'assert.equal(body.errcode, 0)',
-    title: '断言返回数据 errcode 是 0'
-  },
-  {
-    code: 'assert.notEqual(status, 404)',
-    title: '断言 httpCode 不是 404'
-  },
-  {
-    code: 'assert.notEqual(body.errcode, 40000)',
-    title: '断言返回数据 errcode 不是 40000'
-  },
-  {
-    code: 'assert.deepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 等于 {"errcode": 0}'
-  },
-  {
-    code: 'assert.notDeepEqual(body, {"errcode": 0})',
-    title: '断言对象 body 不等于 {"errcode": 0}'
-  },
-  {
-    code: "assert.equal(body.username, " + aa + ")",
-    title: '断言对象mysql返回值'+aa
-  }
-
-];
+    // console.log(env);
     return (
       <div className="interface-test postman">
         {this.state.modalVisible && (
@@ -1005,7 +945,6 @@ export default class Run extends Component {
                   <AceEditor
                     onChange={this.onOpenTest}
                     className="case-script"
-                //    data={this.state.test_script}
                     data={this.state.test_script}
                     ref={aceEditor => {
                       this.aceEditor = aceEditor;
